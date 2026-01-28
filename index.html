@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tool dán Clipboard → tạo QR</title>
+  <style>
+    :root{
+      --blue:#1677ff;
+      --blue2:#0b5ed7;
+      --bg:#f5f8ff;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --shadow:0 10px 24px rgba(2, 6, 23, .10);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #e7f0ff 0%, transparent 60%),
+                  radial-gradient(1200px 600px at 90% 0%, #eaf9ff 0%, transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 22px 14px 40px;
+    }
+    .header{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      margin-bottom: 14px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    h1{
+      margin:0;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns: 1fr}
+    }
+    label{
+      display:block;
+      font-size: 13px;
+      color:var(--muted);
+      margin-bottom: 8px;
+    }
+    textarea{
+      width:100%;
+      min-height: 150px;
+      padding: 12px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      resize: vertical;
+      line-height: 1.35;
+      background: #fbfdff;
+    }
+    textarea:focus{
+      border-color: rgba(22,119,255,.55);
+      box-shadow: 0 0 0 4px rgba(22,119,255,.12);
+    }
+    .row{
+      display:flex; flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    button{
+      appearance:none;
+      border:none;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor:pointer;
+      transition: .15s;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-primary{
+      background: var(--blue);
+      color:#fff;
+    }
+    .btn-primary:active{transform: translateY(1px)}
+    .btn-primary:hover{background: var(--blue2)}
+    .btn-ghost{
+      background: #eef5ff;
+      color: #0b3d91;
+      border: 1px solid #d9e7ff;
+    }
+    .btn-ghost:hover{filter: brightness(.98)}
+    .btn-danger{
+      background:#ffecec;
+      color:#b42318;
+      border:1px solid #ffd2d2;
+    }
+    .btn-danger:hover{filter: brightness(.98)}
+    .qrbox{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px dashed #cfe0ff;
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+      min-height: 260px;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      text-align:center;
+      margin:0;
+    }
+    .meta{
+      display:flex; gap:10px; justify-content:space-between; align-items:center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef5ff;
+      color:#0b3d91;
+      border:1px solid #d9e7ff;
+      font-size:12px;
+      white-space: nowrap;
+    }
+    .status{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+    .status.ok{color:#0f766e}
+    .status.err{color:#b42318}
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">
+        <h1>Tool dán Clipboard → Tạo mã QR</h1>
+        <p class="sub">Bấm “Dán từ Clipboard” để lấy nội dung đang copy và tạo QR. Hoạt động tốt trên iOS/Android/PC (cần thao tác bấm nút).</p>
+      </div>
+      <div class="pill" id="env">Clipboard: đang kiểm tra…</div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div>
+          <label for="data">Nội dung (tự dán từ clipboard hoặc dán thủ công)</label>
+          <textarea id="data" placeholder="Bấm nút ‘Dán từ Clipboard’ hoặc dán nội dung vào đây…"></textarea>
+
+          <div class="row">
+            <button class="btn-primary" id="pasteBtn" type="button">📋 Dán từ Clipboard</button>
+            <button class="btn-ghost" id="makeBtn" type="button">⚡ Tạo/Refresh QR</button>
+            <button class="btn-ghost" id="copyBtn" type="button">🧾 Copy nội dung</button>
+            <button class="btn-ghost" id="downloadBtn" type="button">⬇️ Tải QR (PNG)</button>
+            <button class="btn-danger" id="clearBtn" type="button">🗑️ Xoá</button>
+          </div>
+
+          <div class="status" id="status"></div>
+          <div class="small">Tip: nếu iOS chặn đọc clipboard, hãy chạm vào ô rồi chọn “Dán”, sau đó bấm “Tạo/Refresh QR”.</div>
+
+          <div class="meta">
+            <div>Độ dài: <b id="len">0</b> ký tự</div>
+            <div>QR size: <b>260px</b></div>
+          </div>
+        </div>
+
+        <div>
+          <label>Mã QR</label>
+          <div class="qrbox" id="qrbox">
+            <p class="hint">QR sẽ hiện ở đây</p>
+          </div>
+          <p class="hint" style="margin-top:10px">QR tạo ngay trên máy (không gửi dữ liệu lên server).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QRCode library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <script>
+    const dataEl = document.getElementById('data');
+    const qrbox = document.getElementById('qrbox');
+    const statusEl = document.getElementById('status');
+    const lenEl = document.getElementById('len');
+    const envEl = document.getElementById('env');
+
+    const pasteBtn = document.getElementById('pasteBtn');
+    const makeBtn = document.getElementById('makeBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function setStatus(msg, type="") {
+      statusEl.textContent = msg || "";
+      statusEl.className = "status" + (type ? " " + type : "");
+    }
+
+    function updateLen() {
+      lenEl.textContent = (dataEl.value || "").length.toString();
+    }
+
+    function clearQRBox() {
+      qrbox.innerHTML = '<p class="hint">QR sẽ hiện ở đây</p>';
+    }
+
+    async function renderQR(text) {
+      const value = (text ?? "").trim();
+      updateLen();
+
+      if (!value) {
+        clearQRBox();
+        setStatus("Chưa có nội dung để tạo QR.", "err");
+        return;
+      }
+
+      // Clear and render canvas
+      qrbox.innerHTML = "";
+      try {
+        const canvas = document.createElement("canvas");
+        await QRCode.toCanvas(canvas, value, { width: 260, margin: 1 });
+        qrbox.appendChild(canvas);
+        setStatus("Đã tạo QR từ nội dung hiện tại.", "ok");
+      } catch (e) {
+        console.error(e);
+        clearQRBox();
+        setStatus("Lỗi tạo QR. Nội dung có thể quá dài hoặc có ký tự lạ.", "err");
+      }
+    }
+
+    async function pasteFromClipboard() {
+      setStatus("");
+      try {
+        if (!navigator.clipboard?.readText) {
+          setStatus("Trình duyệt không hỗ trợ đọc clipboard. Hãy dán thủ công vào ô.", "err");
+          return;
+        }
+        const text = await navigator.clipboard.readText(); // requires user gesture
+        if (!text) {
+          setStatus("Clipboard đang trống.", "err");
+          return;
+        }
+        dataEl.value = text;
+        updateLen();
+        await renderQR(text);
+      } catch (e) {
+        console.error(e);
+        setStatus("Không đọc được clipboard (có thể bị chặn quyền). Hãy dán thủ công rồi bấm ‘Tạo/Refresh QR’.", "err");
+      }
+    }
+
+    async function copyText() {
+      const value = (dataEl.value || "");
+      if (!value) { setStatus("Không có nội dung để copy.", "err"); return; }
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(value);
+          setStatus("Đã copy nội dung vào clipboard.", "ok");
+        } else {
+          // fallback
+          dataEl.select();
+          document.execCommand("copy");
+          setStatus("Đã copy nội dung (fallback).", "ok");
+        }
+      } catch (e) {
+        console.error(e);
+        setStatus("Copy thất bại. Hãy copy thủ công.", "err");
+      }
+    }
+
+    function downloadPNG() {
+      const canvas = qrbox.querySelector("canvas");
+      if (!canvas) { setStatus("Chưa có QR để tải.", "err"); return; }
+      const link = document.createElement("a");
+      link.download = "qr.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      setStatus("Đã xuất QR (PNG).", "ok");
+    }
+
+    function clearAll() {
+      dataEl.value = "";
+      updateLen();
+      clearQRBox();
+      setStatus("Đã xoá nội dung và QR.", "ok");
+    }
+
+    // Events
+    pasteBtn.addEventListener("click", pasteFromClipboard);
+    makeBtn.addEventListener("click", () => renderQR(dataEl.value));
+    copyBtn.addEventListener("click", copyText);
+    downloadBtn.addEventListener("click", downloadPNG);
+    clearBtn.addEventListener("click", clearAll);
+
+    dataEl.addEventListener("input", () => {
+      updateLen();
+      // auto-refresh when typing/pasting manually (lightweight)
+      // comment this out if you only want manual refresh
+      renderQR(dataEl.value);
+    });
+
+    // Env check
+    (function init() {
+      const ok = !!navigator.clipboard?.readText;
+      envEl.textContent = "Clipboard: " + (ok ? "hỗ trợ readText" : "không hỗ trợ readText");
+      updateLen();
+      clearQRBox();
+    })();
+  </script>
+</body>
+</html>

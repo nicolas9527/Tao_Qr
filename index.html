@@ -3,698 +3,73 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clipboard → QR + Danh sách + CSV</title>
+  <title>Clipboard → QR</title>
   <style>
-    :root{
-      --blue:#1677ff; --blue2:#0b5ed7; --bg:#f5f8ff; --card:#ffffff;
-      --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --shadow:0 10px 24px rgba(2, 6, 23, .10);
-      --radius:16px; --good:#0f766e; --bad:#b42318;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 600px at 20% -10%, #e7f0ff 0%, transparent 60%),
-        radial-gradient(1200px 600px at 90% 0%, #eaf9ff 0%, transparent 60%),
-        var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:1100px;margin:0 auto;padding:18px 14px 44px}
-    .header{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
-    h1{margin:0;font-size:20px;letter-spacing:.2px}
-    .sub{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
-    .pill{
-      padding:6px 10px;border-radius:999px;
-      background:#eef5ff;color:#0b3d91;border:1px solid #d9e7ff;
-      font-size:12px;white-space:nowrap;align-self:flex-start
-    }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap:14px;
-      align-items:start;
-    }
-    @media (max-width: 920px){ .grid{grid-template-columns:1fr} }
-    label{display:block;font-size:13px;color:var(--muted);margin:10px 0 7px}
-    input, textarea{
-      width:100%;
-      padding:11px 12px;
-      font-size:15px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      outline:none;
-      background:#fbfdff;
-    }
-    textarea{min-height:110px;resize:vertical;line-height:1.35}
-    input:focus, textarea:focus{
-      border-color: rgba(22,119,255,.55);
-      box-shadow: 0 0 0 4px rgba(22,119,255,.12);
-    }
-    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-    button{
-      appearance:none;border:none;
-      padding:11px 14px;border-radius:12px;
-      font-weight:700;font-size:14px;cursor:pointer;
-      transition:.15s;
-      display:inline-flex;align-items:center;gap:8px;
-    }
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:18px;background:#f5f8ff}
+    .card{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+    h1{font-size:18px;margin:0 0 6px}
+    p{margin:0 0 12px;color:#64748b;font-size:13px;line-height:1.35}
+    button{border:none;background:#1677ff;color:#fff;padding:12px 14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
     button:active{transform:translateY(1px)}
-    .btn-primary{background:var(--blue);color:#fff}
-    .btn-primary:hover{background:var(--blue2)}
-    .btn-ghost{
-      background:#eef5ff;color:#0b3d91;border:1px solid #d9e7ff;
-      font-weight:700;
-    }
-    .btn-ghost:hover{filter:brightness(.98)}
-    .btn-danger{
-      background:#ffecec;color:#b42318;border:1px solid #ffd2d2;
-      font-weight:800;
-    }
-    .btn-danger:hover{filter:brightness(.98)}
-    .btn-mini{
-      padding:8px 10px;border-radius:10px;font-size:12px;font-weight:800;
-    }
-    .qrbox{
-      display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;
-      padding:14px;border-radius:14px;border:1px dashed #cfe0ff;
-      background:linear-gradient(180deg,#f7fbff 0%, #ffffff 100%);
-      min-height:260px;
-    }
-    .hint{font-size:12px;color:var(--muted);text-align:center;margin:0}
-    .status{margin-top:10px;font-size:13px;min-height:18px;color:var(--muted)}
-    .status.ok{color:var(--good)}
-    .status.err{color:var(--bad)}
-    .meta{
-      display:flex;gap:10px;justify-content:space-between;align-items:center;
-      margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-      color:var(--muted);font-size:12px;flex-wrap:wrap
-    }
-
-    .listHead{
-      display:flex;gap:10px;align-items:center;justify-content:space-between;
-      margin:16px 0 10px;
-    }
-    .listTitle{margin:0;font-size:16px}
-    .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}
-    .searchRow{display:flex;gap:10px;flex-wrap:wrap}
-    .searchRow input{min-width:min(520px,100%);flex:1}
-    .small{font-size:12px;color:var(--muted)}
-    table{
-      width:100%;border-collapse:separate;border-spacing:0;
-      border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;
-    }
-    thead th{
-      background:#f3f7ff;color:#244a86;
-      font-size:12px;text-transform:uppercase;letter-spacing:.6px;
-      padding:10px 10px;border-bottom:1px solid var(--border);text-align:left;
-    }
-    tbody td{
-      padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;
-      font-size:14px;
-    }
-    tbody tr:hover{background:#fbfdff}
-    tbody tr:last-child td{border-bottom:none}
-    .td-actions{white-space:nowrap}
-    .tag{
-      font-size:12px;padding:4px 8px;border-radius:999px;
-      background:#eef5ff;border:1px solid #d9e7ff;color:#0b3d91;display:inline-block
-    }
-    .sku{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size:13px;color:#0b3d91
-    }
-    .clickable{cursor:pointer}
-    .muted{color:var(--muted);font-size:12px}
-    .fileInput{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:12px;
-      background:#eef5ff;border:1px solid #d9e7ff;color:#0b3d91;
-      font-weight:800;font-size:13px;cursor:pointer;
-    }
-    .fileInput input{display:none}
+    .qr{margin-top:14px;border:1px dashed #cfe0ff;border-radius:14px;min-height:260px;display:flex;align-items:center;justify-content:center;background:#fbfdff}
+    .status{margin-top:10px;font-size:13px;color:#64748b;min-height:18px}
+    .hint{font-size:12px;color:#64748b;margin-top:8px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <div>
-        <h1>Tool dán Clipboard → tạo QR + lưu danh sách + nhập/xuất CSV</h1>
-        <p class="sub">
-          CSV theo chuẩn bạn dùng: <b>Mã sản phẩm,Tên sản phẩm</b> (2 cột).
-          Bấm item trong danh sách để nạp lại và hiển thị QR.
-        </p>
-      </div>
-      <div class="pill" id="env">Clipboard: đang kiểm tra…</div>
-    </div>
+  <div class="card">
+    <h1>Tạo QR từ Clipboard</h1>
+    <p>Bấm nút để lấy nội dung đang copy và tạo QR. (iOS/Safari có thể hỏi quyền clipboard)</p>
 
-    <div class="card">
-      <div class="grid">
-        <div>
-          <label for="name">Tên</label>
-          <input id="name" placeholder="VD: Bánh A, Cháo B..." />
+    <button id="pasteBtn" type="button">📋 Dán từ Clipboard → Tạo QR</button>
 
-          <label for="sku">Mã sản phẩm (SKU)</label>
-          <input id="sku" placeholder="VD: 8934..." inputmode="numeric" />
-
-          <label for="payload">Nội dung tạo QR (để trống = QR lấy theo SKU)</label>
-          <textarea id="payload" placeholder="Dán link/text... hoặc để trống để QR = SKU"></textarea>
-
-          <div class="row">
-            <button class="btn-primary" id="pasteBtn" type="button">📋 Dán từ Clipboard</button>
-            <button class="btn-ghost" id="makeBtn" type="button">⚡ Tạo/Refresh QR</button>
-            <button class="btn-ghost" id="saveBtn" type="button">💾 Lưu vào danh sách</button>
-            <button class="btn-ghost" id="downloadBtn" type="button">⬇️ Tải QR (PNG)</button>
-            <button class="btn-danger" id="clearBtn" type="button">🗑️ Xoá form</button>
-          </div>
-
-          <div class="status" id="status"></div>
-          <div class="meta">
-            <div>Độ dài QR: <b id="len">0</b> ký tự</div>
-            <div>Tổng đã lưu: <b id="count">0</b></div>
-            <div class="muted">Lưu trong máy (localStorage)</div>
-          </div>
-        </div>
-
-        <div>
-          <label>Mã QR</label>
-          <div class="qrbox" id="qrbox">
-            <p class="hint">QR sẽ hiện ở đây</p>
-          </div>
-          <p class="hint" style="margin-top:10px">QR tạo ngay trên máy (không gửi dữ liệu lên server).</p>
-        </div>
-      </div>
-
-      <div class="listHead">
-        <h2 class="listTitle">Danh sách đã lưu</h2>
-        <div class="tools">
-          <label class="fileInput" title="Nhập CSV (Mã sản phẩm,Tên sản phẩm)">
-            ⬆️ Nhập CSV
-            <input id="csvFile" type="file" accept=".csv,text/csv" />
-          </label>
-          <button class="btn-ghost" id="exportBtn" type="button">⬇️ Xuất CSV</button>
-          <button class="btn-danger" id="clearListBtn" type="button">🧹 Xoá toàn bộ</button>
-        </div>
-      </div>
-
-      <div class="searchRow">
-        <input id="search" placeholder="Tìm theo Tên hoặc Mã sản phẩm..." />
-        <button class="btn-ghost" id="copyAllSkusBtn" type="button">📎 Copy tất cả mã</button>
-      </div>
-      <div class="small" style="margin:8px 0 10px">
-        Tip: bấm vào <b>Tên</b> hoặc nút <b>Hiển thị</b> để nạp lại item và hiện QR. Nút <b>Copy mã</b> để copy nhanh.
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th style="width:36%">Tên</th>
-            <th style="width:24%">Mã sản phẩm</th>
-            <th style="width:26%">QR payload</th>
-            <th style="width:14%">Thời gian</th>
-            <th style="width:10%">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="5" class="muted">Chưa có dữ liệu.</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="qr" id="qrBox">QR sẽ hiện ở đây</div>
+    <div class="status" id="status"></div>
+    <div class="hint">Nếu bị chặn clipboard: hãy dán thủ công vào Notes rồi copy lại, hoặc dùng trình duyệt khác.</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
   <script>
-    const STORAGE_KEY = "qr_tool_items_v2_csv_vn_2cols";
+    const pasteBtn = document.getElementById('pasteBtn');
+    const qrBox = document.getElementById('qrBox');
+    const statusEl = document.getElementById('status');
 
-    const envEl = document.getElementById("env");
-    const statusEl = document.getElementById("status");
-    const qrbox = document.getElementById("qrbox");
+    function setStatus(msg){ statusEl.textContent = msg || ""; }
 
-    const nameEl = document.getElementById("name");
-    const skuEl = document.getElementById("sku");
-    const payloadEl = document.getElementById("payload");
-
-    const lenEl = document.getElementById("len");
-    const countEl = document.getElementById("count");
-
-    const pasteBtn = document.getElementById("pasteBtn");
-    const makeBtn = document.getElementById("makeBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const clearBtn = document.getElementById("clearBtn");
-
-    const searchEl = document.getElementById("search");
-    const tbody = document.getElementById("tbody");
-
-    const csvFileEl = document.getElementById("csvFile");
-    const exportBtn = document.getElementById("exportBtn");
-    const clearListBtn = document.getElementById("clearListBtn");
-    const copyAllSkusBtn = document.getElementById("copyAllSkusBtn");
-
-    let items = loadItems(); // {id,name,sku,payload,createdAt}
-    let selectedId = null;
-
-    function nowISO(){ return new Date().toISOString(); }
-    function fmtDate(iso){
-      try{
-        const d = new Date(iso);
-        const y = d.getFullYear();
-        const m = String(d.getMonth()+1).padStart(2,"0");
-        const day = String(d.getDate()).padStart(2,"0");
-        const hh = String(d.getHours()).padStart(2,"0");
-        const mm = String(d.getMinutes()).padStart(2,"0");
-        return `${day}/${m}/${y} ${hh}:${mm}`;
-      }catch{ return ""; }
-    }
-
-    function setStatus(msg, type=""){
-      statusEl.textContent = msg || "";
-      statusEl.className = "status" + (type ? " " + type : "");
-    }
-    function normalize(s){ return (s || "").toString().trim(); }
-
-    function genId(){
-      return "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-    }
-
-    function loadItems(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch{ return []; }
-    }
-    function saveItems(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      countEl.textContent = String(items.length);
-    }
-
-    function getQrValue(){
-      const p = normalize(payloadEl.value);
-      const sku = normalize(skuEl.value);
-      return normalize(p || sku || "");
-    }
-    function updateLen(){ lenEl.textContent = getQrValue().length.toString(); }
-    function clearQRBox(){ qrbox.innerHTML = '<p class="hint">QR sẽ hiện ở đây</p>'; }
-
-    async function renderQR(){
-      const value = getQrValue();
-      updateLen();
+    async function renderQR(text){
+      const value = (text || "").trim();
       if (!value){
-        clearQRBox();
-        setStatus("Chưa có nội dung để tạo QR (nhập Mã sản phẩm hoặc payload).", "err");
+        qrBox.textContent = "QR sẽ hiện ở đây";
+        setStatus("Clipboard đang trống.");
         return;
       }
-      qrbox.innerHTML = "";
+      qrBox.innerHTML = "";
       try{
         const canvas = document.createElement("canvas");
-        await QRCode.toCanvas(canvas, value, { width: 260, margin: 1 });
-        qrbox.appendChild(canvas);
-        setStatus("Đã tạo QR.", "ok");
+        await QRCode.toCanvas(canvas, value, { width: 240, margin: 1 });
+        qrBox.appendChild(canvas);
+        setStatus("Đã tạo QR từ clipboard.");
       }catch(e){
         console.error(e);
-        clearQRBox();
-        setStatus("Lỗi tạo QR. Nội dung có thể quá dài hoặc ký tự lạ.", "err");
+        qrBox.textContent = "QR sẽ hiện ở đây";
+        setStatus("Lỗi tạo QR.");
       }
     }
 
-    function downloadPNG(){
-      const canvas = qrbox.querySelector("canvas");
-      if (!canvas){ setStatus("Chưa có QR để tải.", "err"); return; }
-      const sku = normalize(skuEl.value) || "qr";
-      const link = document.createElement("a");
-      link.download = `${sku}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      setStatus("Đã xuất QR (PNG).", "ok");
-    }
-
-    async function copyToClipboard(text){
-      const value = String(text ?? "");
-      if (!value) return false;
-      try{
-        if (navigator.clipboard?.writeText){
-          await navigator.clipboard.writeText(value);
-          return true;
-        }
-        const ta = document.createElement("textarea");
-        ta.value = value;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        return true;
-      }catch{ return false; }
-    }
-
-    async function pasteFromClipboard(){
+    pasteBtn.addEventListener('click', async () => {
       setStatus("");
       try{
         if (!navigator.clipboard?.readText){
-          setStatus("Trình duyệt không hỗ trợ đọc clipboard. Hãy dán thủ công.", "err");
+          setStatus("Trình duyệt không hỗ trợ đọc clipboard.");
           return;
         }
         const text = await navigator.clipboard.readText();
-        if (!text){ setStatus("Clipboard đang trống.", "err"); return; }
-        payloadEl.value = text;
-        await renderQR();
+        await renderQR(text);
       }catch(e){
         console.error(e);
-        setStatus("Không đọc được clipboard (có thể bị chặn quyền). Hãy dán thủ công rồi bấm ‘Tạo/Refresh QR’.", "err");
-      }finally{
-        updateLen();
-      }
-    }
-
-    function filteredItems(){
-      const q = normalize(searchEl.value).toLowerCase();
-      const arr = [...items].sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
-      if (!q) return arr;
-      return arr.filter(it=>{
-        const name = normalize(it.name).toLowerCase();
-        const sku = normalize(it.sku).toLowerCase();
-        return name.includes(q) || sku.includes(q);
-      });
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "").replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-      }[m]));
-    }
-    function escapeAttr(s){ return String(s ?? "").replace(/"/g, "&quot;"); }
-
-    function renderTable(){
-      const arr = filteredItems();
-      countEl.textContent = String(items.length);
-
-      if (arr.length === 0){
-        tbody.innerHTML = `<tr><td colspan="5" class="muted">Không có kết quả.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = arr.map(it=>{
-        const payload = normalize(it.payload || it.sku); // nếu payload trống -> QR = sku
-        const payloadShort = payload.length > 28 ? payload.slice(0, 28) + "…" : payload;
-        const isSel = it.id === selectedId;
-        return `
-          <tr data-id="${it.id}" ${isSel ? 'style="background:#f7fbff"' : ""}>
-            <td class="clickable" data-action="show" title="Bấm để hiển thị QR">
-              ${escapeHtml(it.name || "(không tên)")}
-              ${isSel ? '<span class="tag" style="margin-left:6px">đang chọn</span>' : ""}
-            </td>
-            <td class="sku">${escapeHtml(it.sku || "")}</td>
-            <td title="${escapeAttr(payload)}">${escapeHtml(payloadShort)}</td>
-            <td class="muted">${escapeHtml(fmtDate(it.createdAt || ""))}</td>
-            <td class="td-actions">
-              <button class="btn-mini btn-ghost" data-action="show" type="button">👁️ Hiển thị</button>
-              <button class="btn-mini btn-ghost" data-action="copySku" type="button">📎 Copy mã</button>
-              <button class="btn-mini btn-danger" data-action="del" type="button">🗑️</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    function selectItemById(id){
-      const it = items.find(x => x.id === id);
-      if (!it) return;
-      selectedId = it.id;
-
-      nameEl.value = it.name || "";
-      skuEl.value = it.sku || "";
-      payloadEl.value = it.payload || ""; // thường trống nếu import
-
-      renderQR();
-      renderTable();
-      setStatus("Đã nạp item từ danh sách và hiển thị QR.", "ok");
-    }
-
-    function deleteItemById(id){
-      const it = items.find(x=>x.id===id);
-      items = items.filter(x=>x.id!==id);
-      if (selectedId === id) selectedId = null;
-      saveItems();
-      renderTable();
-      setStatus(`Đã xoá: ${it?.name || "item"}.`, "ok");
-    }
-
-    function upsertCurrent(){
-      const name = normalize(nameEl.value);
-      const sku  = normalize(skuEl.value);
-      const payload = normalize(payloadEl.value); // optional
-
-      if (!name){ setStatus("Thiếu Tên (cần để tìm kiếm/lọc).", "err"); return; }
-      if (!sku){ setStatus("Thiếu Mã sản phẩm.", "err"); return; }
-
-      // merge by SKU
-      const idx = items.findIndex(x => normalize(x.sku) === sku);
-      if (idx >= 0){
-        items[idx] = {
-          ...items[idx],
-          name, sku, payload,
-          createdAt: items[idx].createdAt || nowISO()
-        };
-        selectedId = items[idx].id;
-        saveItems();
-        renderTable();
-        setStatus("Đã cập nhật item theo Mã sản phẩm.", "ok");
-      }else{
-        const it = { id: genId(), name, sku, payload, createdAt: nowISO() };
-        items.push(it);
-        selectedId = it.id;
-        saveItems();
-        renderTable();
-        setStatus("Đã lưu item mới.", "ok");
-      }
-    }
-
-    // ===== CSV (ĐÚNG KIỂU: "Mã sản phẩm,Tên sản phẩm") =====
-    function csvEscape(value){
-      const s = String(value ?? "");
-      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-      return s;
-    }
-
-    function exportCSV(){
-      // chuẩn bạn dùng: SKU trước, Tên sau
-      const header = ["Mã sản phẩm","Tên sản phẩm"];
-      const rows = items
-        .slice()
-        .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""))
-        .map(it => [csvEscape(it.sku), csvEscape(it.name)].join(","));
-
-      const csv = [header.join(","), ...rows].join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ds_ma_sp_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus("Đã xuất CSV (Mã sản phẩm,Tên sản phẩm).", "ok");
-    }
-
-    // CSV parser supports quotes/commas/newlines
-    function parseCSV(text){
-      const out = [];
-      let row = [];
-      let cur = "";
-      let i = 0;
-      let inQuotes = false;
-
-      while (i < text.length){
-        const c = text[i];
-
-        if (inQuotes){
-          if (c === '"'){
-            if (text[i+1] === '"'){
-              cur += '"';
-              i += 2;
-              continue;
-            }else{
-              inQuotes = false;
-              i++;
-              continue;
-            }
-          }else{
-            cur += c;
-            i++;
-            continue;
-          }
-        }else{
-          if (c === '"'){ inQuotes = true; i++; continue; }
-          if (c === ","){ row.push(cur); cur=""; i++; continue; }
-          if (c === "\r"){ i++; continue; }
-          if (c === "\n"){ row.push(cur); out.push(row); row=[]; cur=""; i++; continue; }
-          cur += c; i++;
-        }
-      }
-      row.push(cur);
-      out.push(row);
-      if (out.length && out[out.length-1].length === 1 && out[out.length-1][0] === "") out.pop();
-      return out;
-    }
-
-    function normalizeHeader(h){
-      // làm “mềm”: bỏ dấu + lowercase + bỏ khoảng trắng thừa
-      const s = normalize(h).toLowerCase();
-      return s
-        .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // bỏ dấu tiếng Việt
-        .replace(/\s+/g," ")
-        .trim();
-    }
-
-    async function importCSVFile(file){
-      try{
-        const text = await file.text();
-        const rows = parseCSV(text);
-        if (!rows.length){ setStatus("CSV rỗng.", "err"); return; }
-
-        const headerRaw = rows[0] || [];
-        const header = headerRaw.map(normalizeHeader);
-
-        // detect header: "ma san pham" & "ten san pham"
-        const idxSku = header.indexOf("ma san pham");
-        const idxName = header.indexOf("ten san pham");
-        const hasHeader = (idxSku >= 0 && idxName >= 0);
-
-        const dataRows = hasHeader ? rows.slice(1) : rows;
-
-        let imported = 0;
-        let updated = 0;
-
-        for (const r of dataRows){
-          // nếu không có header: cột 0=sku, cột 1=name
-          const sku  = normalize(hasHeader ? r[idxSku] : r[0]);
-          const name = normalize(hasHeader ? r[idxName] : r[1]);
-
-          if (!sku || !name) continue;
-
-          const idx = items.findIndex(x => normalize(x.sku) === sku);
-          if (idx >= 0){
-            items[idx] = {
-              ...items[idx],
-              sku,
-              name,
-              // giữ payload nếu đã có, nếu chưa có thì để trống (QR sẽ lấy SKU)
-              payload: normalize(items[idx].payload || ""),
-            };
-            updated++;
-          }else{
-            items.push({
-              id: genId(),
-              sku,
-              name,
-              payload: "",          // import theo chuẩn bạn dùng: chỉ 2 cột
-              createdAt: nowISO()
-            });
-            imported++;
-          }
-        }
-
-        saveItems();
-        renderTable();
-        setStatus(`Nhập CSV xong. Thêm mới: ${imported}, cập nhật theo Mã sản phẩm: ${updated}.`, "ok");
-      }catch(e){
-        console.error(e);
-        setStatus("Lỗi nhập CSV. Kiểm tra định dạng file (2 cột: Mã sản phẩm,Tên sản phẩm).", "err");
-      }finally{
-        csvFileEl.value = "";
-      }
-    }
-
-    function clearForm(){
-      selectedId = null;
-      nameEl.value = "";
-      skuEl.value = "";
-      payloadEl.value = "";
-      updateLen();
-      clearQRBox();
-      renderTable();
-      setStatus("Đã xoá form.", "ok");
-    }
-
-    function clearAllList(){
-      if (!items.length){ setStatus("Danh sách đang trống.", "err"); return; }
-      items = [];
-      selectedId = null;
-      saveItems();
-      renderTable();
-      clearQRBox();
-      setStatus("Đã xoá toàn bộ danh sách.", "ok");
-    }
-
-    async function copyAllSkus(){
-      const arr = filteredItems().map(it => normalize(it.sku)).filter(Boolean);
-      if (!arr.length){ setStatus("Không có Mã sản phẩm để copy.", "err"); return; }
-      const ok = await copyToClipboard(arr.join("\n"));
-      setStatus(ok ? "Đã copy danh sách Mã sản phẩm (mỗi dòng 1 mã)." : "Copy thất bại.", ok ? "ok" : "err");
-    }
-
-    // ===== Events =====
-    pasteBtn.addEventListener("click", pasteFromClipboard);
-    makeBtn.addEventListener("click", renderQR);
-    saveBtn.addEventListener("click", () => { upsertCurrent(); renderQR(); });
-    downloadBtn.addEventListener("click", downloadPNG);
-    clearBtn.addEventListener("click", clearForm);
-
-    payloadEl.addEventListener("input", () => { updateLen(); renderQR(); });
-    skuEl.addEventListener("input", () => { updateLen(); renderQR(); });
-    searchEl.addEventListener("input", renderTable);
-
-    tbody.addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-action]");
-      const tr = e.target.closest("tr[data-id]");
-      if (!tr) return;
-      const id = tr.getAttribute("data-id");
-
-      const action = btn?.getAttribute("data-action") || (e.target.matches("td.clickable") ? "show" : null);
-      if (!action) return;
-
-      if (action === "show"){
-        selectItemById(id);
-        return;
-      }
-      if (action === "copySku"){
-        const it = items.find(x=>x.id===id);
-        const ok = await copyToClipboard(it?.sku || "");
-        setStatus(ok ? "Đã copy Mã sản phẩm." : "Copy thất bại.", ok ? "ok" : "err");
-        return;
-      }
-      if (action === "del"){
-        deleteItemById(id);
-        return;
+        setStatus("Không đọc được clipboard (có thể bị chặn quyền).");
       }
     });
-
-    csvFileEl.addEventListener("change", () => {
-      const file = csvFileEl.files?.[0];
-      if (file) importCSVFile(file);
-    });
-
-    exportBtn.addEventListener("click", exportCSV);
-    clearListBtn.addEventListener("click", clearAllList);
-    copyAllSkusBtn.addEventListener("click", copyAllSkus);
-
-    // ===== Init =====
-    (function init(){
-      const ok = !!navigator.clipboard?.readText;
-      envEl.textContent = "Clipboard: " + (ok ? "hỗ trợ readText" : "không hỗ trợ readText");
-      countEl.textContent = String(items.length);
-      updateLen();
-      renderTable();
-      clearQRBox();
-      setStatus("Sẵn sàng.", "ok");
-    })();
   </script>
 </body>
 </html>

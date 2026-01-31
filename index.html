@@ -3,73 +3,199 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clipboard → QR</title>
+  <title>QR Tool</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:18px;background:#f5f8ff}
-    .card{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
-    h1{font-size:18px;margin:0 0 6px}
-    p{margin:0 0 12px;color:#64748b;font-size:13px;line-height:1.35}
-    button{border:none;background:#1677ff;color:#fff;padding:12px 14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
+    body{margin:0;padding:14px;background:#f5f8ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    .box{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px}
+    textarea{
+      width:100%;min-height:90px;padding:12px;font-size:16px;line-height:1.35;
+      border:1px solid #e2e8f0;border-radius:12px;outline:none;resize:vertical;background:#fbfdff;
+    }
+    textarea:focus{border-color:rgba(22,119,255,.55);box-shadow:0 0 0 4px rgba(22,119,255,.12)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{border:none;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:700;cursor:pointer}
     button:active{transform:translateY(1px)}
-    .qr{margin-top:14px;border:1px dashed #cfe0ff;border-radius:14px;min-height:260px;display:flex;align-items:center;justify-content:center;background:#fbfdff}
-    .status{margin-top:10px;font-size:13px;color:#64748b;min-height:18px}
-    .hint{font-size:12px;color:#64748b;margin-top:8px}
+    .primary{background:#1677ff;color:#fff}
+    .ghost{background:#eef5ff;color:#0b3d91;border:1px solid #d9e7ff}
+    .danger{background:#ffecec;color:#b42318;border:1px solid #ffd2d2}
+
+    #qr{
+      margin-top:12px;border:1px dashed #cfe0ff;border-radius:14px;min-height:260px;
+      display:flex;align-items:center;justify-content:center;background:#fbfdff
+    }
+    #qr canvas{display:block;max-width:100%;height:auto}
+    #msg{margin-top:8px;font-size:12px;color:#64748b;min-height:16px}
+
+    /* History */
+    .hhead{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .htitle{font-size:12px;color:#64748b;font-weight:700}
+    .hlist{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      max-width:100%;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:#eef5ff;border:1px solid #d9e7ff;color:#0b3d91;
+      font-size:12px;font-weight:700;cursor:pointer;
+    }
+    .chip span{
+      display:inline-block;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .chip i{font-style:normal;opacity:.75}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Tạo QR từ Clipboard</h1>
-    <p>Bấm nút để lấy nội dung đang copy và tạo QR. (iOS/Safari có thể hỏi quyền clipboard)</p>
+  <div class="box">
+    <textarea id="t" placeholder="Dán nội dung..."></textarea>
 
-    <button id="pasteBtn" type="button">📋 Dán từ Clipboard → Tạo QR</button>
+    <div class="row">
+      <button class="primary" id="paste" type="button">Dán</button>
+      <button class="ghost" id="gen" type="button">Tạo QR</button>
+      <button class="danger" id="clr" type="button">Xoá</button>
+    </div>
 
-    <div class="qr" id="qrBox">QR sẽ hiện ở đây</div>
-    <div class="status" id="status"></div>
-    <div class="hint">Nếu bị chặn clipboard: hãy dán thủ công vào Notes rồi copy lại, hoặc dùng trình duyệt khác.</div>
+    <div id="qr">QR</div>
+    <div id="msg"></div>
+
+    <div class="hhead">
+      <div class="htitle">Lịch sử</div>
+      <button class="danger" id="clearHistory" type="button" style="padding:8px 10px;font-size:12px">Xoá lịch sử</button>
+    </div>
+    <div class="hlist" id="hlist"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
-    const pasteBtn = document.getElementById('pasteBtn');
-    const qrBox = document.getElementById('qrBox');
-    const statusEl = document.getElementById('status');
+    const t = document.getElementById('t');
+    const qr = document.getElementById('qr');
+    const msg = document.getElementById('msg');
+    const hlist = document.getElementById('hlist');
 
-    function setStatus(msg){ statusEl.textContent = msg || ""; }
+    const DISPLAY_SIZE = 260;
+    const MARGIN = 2;
 
-    async function renderQR(text){
-      const value = (text || "").trim();
-      if (!value){
-        qrBox.textContent = "QR sẽ hiện ở đây";
-        setStatus("Clipboard đang trống.");
+    const HISTORY_KEY = "qr_tool_history_v1";
+    const HISTORY_MAX = 20;
+
+    const setMsg = (s="") => msg.textContent = s;
+    const norm = (s) => (s || "").toString().trim();
+
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch{ return []; }
+    }
+    function saveHistory(arr){
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+    }
+
+    let history = loadHistory();
+
+    function renderHistory(){
+      if (!history.length){
+        hlist.innerHTML = '<span style="font-size:12px;color:#94a3b8">Trống</span>';
         return;
       }
-      qrBox.innerHTML = "";
+      hlist.innerHTML = history.map((v, idx) => {
+        const safe = escapeHtml(v);
+        return `
+          <div class="chip" data-idx="${idx}" title="Bấm để dùng lại">
+            <i>${idx+1}</i><span>${safe}</span>
+          </div>`;
+      }).join("");
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    function pushHistory(value){
+      const v = norm(value);
+      if (!v) return;
+
+      // đưa lên đầu, tránh trùng
+      history = [v, ...history.filter(x => x !== v)].slice(0, HISTORY_MAX);
+      saveHistory(history);
+      renderHistory();
+    }
+
+    async function draw(value, shouldSave=true){
+      const v = norm(value);
+      if(!v){ qr.textContent = "QR"; setMsg(""); return; }
+
+      qr.innerHTML = "";
       try{
+        const dpr = window.devicePixelRatio || 1;
+        const px = Math.floor(DISPLAY_SIZE * dpr);
+
         const canvas = document.createElement("canvas");
-        await QRCode.toCanvas(canvas, value, { width: 240, margin: 1 });
-        qrBox.appendChild(canvas);
-        setStatus("Đã tạo QR từ clipboard.");
+        await QRCode.toCanvas(canvas, v, { width: px, margin: MARGIN });
+
+        canvas.style.width = DISPLAY_SIZE + "px";
+        canvas.style.height = DISPLAY_SIZE + "px";
+
+        qr.appendChild(canvas);
+        setMsg("");
+
+        if (shouldSave) pushHistory(v);
       }catch(e){
         console.error(e);
-        qrBox.textContent = "QR sẽ hiện ở đây";
-        setStatus("Lỗi tạo QR.");
+        qr.textContent = "QR";
+        setMsg("Lỗi");
       }
     }
 
-    pasteBtn.addEventListener('click', async () => {
-      setStatus("");
+    // auto update when type/paste
+    let timer = null;
+    t.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => draw(t.value, false), 120); // gõ thì không spam lịch sử
+    });
+
+    document.getElementById('gen').addEventListener('click', () => draw(t.value, true));
+
+    document.getElementById('clr').addEventListener('click', () => {
+      t.value = "";
+      qr.textContent = "QR";
+      setMsg("");
+    });
+
+    document.getElementById('paste').addEventListener('click', async () => {
       try{
-        if (!navigator.clipboard?.readText){
-          setStatus("Trình duyệt không hỗ trợ đọc clipboard.");
-          return;
-        }
+        if(!navigator.clipboard?.readText){ setMsg("Clipboard không hỗ trợ"); return; }
         const text = await navigator.clipboard.readText();
-        await renderQR(text);
+        t.value = text || "";
+        draw(t.value, true);
+        setMsg("");
       }catch(e){
         console.error(e);
-        setStatus("Không đọc được clipboard (có thể bị chặn quyền).");
+        setMsg("Không đọc được clipboard");
       }
     });
+
+    // click chip to reuse
+    hlist.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      const idx = Number(chip.getAttribute("data-idx"));
+      const v = history[idx];
+      if (!v) return;
+      t.value = v;
+      draw(v, false);
+    });
+
+    document.getElementById("clearHistory").addEventListener("click", () => {
+      history = [];
+      saveHistory(history);
+      renderHistory();
+      setMsg("");
+    });
+
+    // init
+    renderHistory();
   </script>
 </body>
 </html>

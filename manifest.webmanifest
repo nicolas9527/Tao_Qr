@@ -1,0 +1,17 @@
+{
+  "name": "QR Tool",
+  "short_name": "QR Tool",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8ff",
+  "theme_color": "#1677ff",
+  "icons": [
+    {
+      "src": "icon.PNG",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

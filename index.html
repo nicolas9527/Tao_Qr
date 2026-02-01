@@ -2,12 +2,14 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+  <!-- CHỐT: khóa zoom + fit tai thỏ -->
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>QR Tool</title>
 
   <!-- iOS / PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f6f8ff"> <!-- đổi màu UI Safari (bớt xanh) -->
+  <meta name="theme-color" content="#f6f8ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icon.PNG">
@@ -32,9 +34,17 @@
     }
     *{box-sizing:border-box}
 
+    /* CHỐT: không trượt ngang, không “rubber band” ngang */
+    html, body{
+      width:100%;
+      overflow-x:hidden;
+      overscroll-behavior-x: none;
+      -webkit-text-size-adjust: 100%;
+      touch-action: pan-y; /* chỉ cho vuốt dọc */
+    }
+
     body{
       margin:0;
-      /* safe-area để liền mạch, không cấn tai thỏ */
       padding: calc(18px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
       color:var(--text);
@@ -69,10 +79,22 @@
     @media (max-width:740px){.grid{grid-template-columns:1fr}}
 
     textarea{
-      width:100%;min-height:120px;padding:12px 12px 40px;
-      font-size:16px;line-height:1.35;
-      border:1px solid var(--border);border-radius:16px;outline:none;
-      resize:vertical;background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
+      width:100%;
+      min-height:120px;
+      padding:12px 12px 40px;
+      font-size:16px;
+      line-height:1.35;
+      border:1px solid var(--border);
+      border-radius:16px;
+      outline:none;
+      resize:vertical;
+      background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
+
+      /* CHỐT: tránh kéo ngang trong textarea */
+      overflow-x:hidden;
+      white-space:pre-wrap;
+      word-break:break-word;
+      touch-action: pan-y;
     }
     textarea:focus{border-color:rgba(22,119,255,.55);box-shadow:0 0 0 4px rgba(22,119,255,.12)}
 
@@ -81,6 +103,10 @@
       appearance:none;border:none;border-radius:14px;padding:12px 14px;
       font-size:14px;font-weight:900;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:8px;user-select:none;
+
+      /* giảm double-tap zoom trên iOS */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     button:active{transform:translateY(1px)}
     .primary{background:var(--blue);color:#fff}
@@ -119,6 +145,9 @@
       padding:10px 12px;border-radius:999px;
       background:var(--chip);border:1px solid var(--chipBorder);
       color:#0b3d91;font-size:12px;font-weight:900;cursor:pointer;transition:.12s;
+
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     .chip:hover{transform:translateY(-1px)}
     .chip:active{transform:translateY(0)}
@@ -173,12 +202,31 @@
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
-    // Service worker (PWA)
+    // PWA
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js").catch(() => {});
       });
     }
+
+    // ===== CHỐT: chặn pinch zoom + double tap zoom (iOS) =====
+    (function lockZoomIOS(){
+      // chặn pinch zoom (Safari iOS)
+      ["gesturestart","gesturechange","gestureend"].forEach(ev => {
+        document.addEventListener(ev, (e) => e.preventDefault(), { passive:false });
+      });
+
+      // chặn double-tap zoom
+      let lastTouchEnd = 0;
+      document.addEventListener("touchend", function(e){
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+      }, { passive:false });
+
+      // chặn double click zoom (một số trường hợp)
+      document.addEventListener("dblclick", (e) => e.preventDefault(), { passive:false });
+    })();
 
     const t = document.getElementById('t');
     const qr = document.getElementById('qr');
@@ -190,7 +238,7 @@
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
 
-    const HISTORY_KEY = "qr_tool_history_ios_pwa_v2";
+    const HISTORY_KEY = "qr_tool_history_ios_pwa_v3";
     const HISTORY_MAX = 20;
 
     const norm = (s) => (s || "").toString().trim();
@@ -299,7 +347,6 @@
       }
     });
 
-    // chọn item lịch sử
     hlist.addEventListener("click", (e) => {
       const chip = e.target.closest(".chip");
       if (!chip) return;
@@ -318,7 +365,6 @@
       setPill("Ready");
     });
 
-    // init
     renderHistory();
     draw("", false);
   </script>

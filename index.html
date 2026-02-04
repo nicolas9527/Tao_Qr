@@ -2,7 +2,6 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <!-- CHỐT: khóa zoom + fit tai thỏ -->
   <meta name="viewport"
         content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>QR Tool</title>
@@ -17,30 +16,19 @@
 
   <style>
     :root{
-      --bg:#f6f8ff;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --border:#e2e8f0;
-      --shadow:0 14px 35px rgba(2,6,23,.10);
-      --blue:#1677ff;
-      --blue2:#0b5ed7;
-      --chip:#eef5ff;
-      --chipBorder:#d9e7ff;
-      --dangerBg:#ffecec;
-      --dangerBorder:#ffd2d2;
-      --dangerText:#b42318;
-      --radius:18px;
+      --bg:#f6f8ff; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --border:#e2e8f0; --shadow:0 14px 35px rgba(2,6,23,.10);
+      --blue:#1677ff; --blue2:#0b5ed7; --chip:#eef5ff; --chipBorder:#d9e7ff;
+      --dangerBg:#ffecec; --dangerBorder:#ffd2d2; --dangerText:#b42318; --radius:18px;
     }
     *{box-sizing:border-box}
 
-    /* CHỐT: không trượt ngang, không “rubber band” ngang */
     html, body{
       width:100%;
       overflow-x:hidden;
-      overscroll-behavior-x: none;
-      -webkit-text-size-adjust: 100%;
-      touch-action: pan-y; /* chỉ cho vuốt dọc */
+      overscroll-behavior-x:none;
+      -webkit-text-size-adjust:100%;
+      touch-action:pan-y;
     }
 
     body{
@@ -56,45 +44,22 @@
     }
 
     .wrap{max-width:760px;margin:0 auto}
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px;
-    }
-
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
     .top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
     .brand{display:flex;flex-direction:column;gap:2px}
     .title{font-size:16px;font-weight:900;letter-spacing:.2px;margin:0;line-height:1.2}
     .sub{margin:0;color:var(--muted);font-size:12px;line-height:1.3}
-    .pill{
-      align-self:flex-start;
-      padding:7px 10px;border-radius:999px;
-      background:var(--chip);border:1px solid var(--chipBorder);
-      color:#0b3d91;font-size:12px;font-weight:800;white-space:nowrap;user-select:none
-    }
+    .pill{align-self:flex-start;padding:7px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--chipBorder);color:#0b3d91;font-size:12px;font-weight:800;white-space:nowrap;user-select:none}
 
     .grid{display:grid;grid-template-columns:1fr 320px;gap:12px;align-items:start}
     @media (max-width:740px){.grid{grid-template-columns:1fr}}
 
     textarea{
-      width:100%;
-      min-height:120px;
-      padding:12px 12px 40px;
-      font-size:16px;
-      line-height:1.35;
-      border:1px solid var(--border);
-      border-radius:16px;
-      outline:none;
-      resize:vertical;
-      background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
-
-      /* CHỐT: tránh kéo ngang trong textarea */
-      overflow-x:hidden;
-      white-space:pre-wrap;
-      word-break:break-word;
-      touch-action: pan-y;
+      width:100%;min-height:120px;padding:12px 12px 40px;
+      font-size:16px;line-height:1.35;
+      border:1px solid var(--border);border-radius:16px;outline:none;
+      resize:vertical;background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
+      overflow-x:hidden;white-space:pre-wrap;word-break:break-word;touch-action:pan-y;
     }
     textarea:focus{border-color:rgba(22,119,255,.55);box-shadow:0 0 0 4px rgba(22,119,255,.12)}
 
@@ -103,10 +68,8 @@
       appearance:none;border:none;border-radius:14px;padding:12px 14px;
       font-size:14px;font-weight:900;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:8px;user-select:none;
-
-      /* giảm double-tap zoom trên iOS */
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
     button:active{transform:translateY(1px)}
     .primary{background:var(--blue);color:#fff}
@@ -126,13 +89,23 @@
       background: radial-gradient(400px 200px at 50% 10%, rgba(22,119,255,.10), transparent 60%);
       pointer-events:none;
     }
-    #qr canvas{display:block;max-width:100%;height:auto;position:relative;z-index:1}
+
+    /* QR ảnh để nhấn giữ lưu */
+    #qrImg{
+      display:block;
+      width:300px;
+      height:300px;
+      max-width:100%;
+      position:relative;
+      z-index:1;
+      border-radius:10px;
+      /* ảnh QR không cần smoothing */
+      image-rendering: pixelated;
+    }
+
     #qrText{position:relative;z-index:1;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.3px;user-select:none}
 
-    .meta{
-      margin-top:10px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;
-      color:var(--muted);font-size:12px;
-    }
+    .meta{margin-top:10px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px}
     #msg{min-height:16px}
 
     .history{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
@@ -145,9 +118,8 @@
       padding:10px 12px;border-radius:999px;
       background:var(--chip);border:1px solid var(--chipBorder);
       color:#0b3d91;font-size:12px;font-weight:900;cursor:pointer;transition:.12s;
-
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
     .chip:hover{transform:translateY(-1px)}
     .chip:active{transform:translateY(0)}
@@ -209,22 +181,17 @@
       });
     }
 
-    // ===== CHỐT: chặn pinch zoom + double tap zoom (iOS) =====
+    // Lock zoom iOS
     (function lockZoomIOS(){
-      // chặn pinch zoom (Safari iOS)
       ["gesturestart","gesturechange","gestureend"].forEach(ev => {
         document.addEventListener(ev, (e) => e.preventDefault(), { passive:false });
       });
-
-      // chặn double-tap zoom
       let lastTouchEnd = 0;
       document.addEventListener("touchend", function(e){
         const now = Date.now();
         if (now - lastTouchEnd <= 300) e.preventDefault();
         lastTouchEnd = now;
       }, { passive:false });
-
-      // chặn double click zoom (một số trường hợp)
       document.addEventListener("dblclick", (e) => e.preventDefault(), { passive:false });
     })();
 
@@ -238,7 +205,7 @@
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
 
-    const HISTORY_KEY = "qr_tool_history_ios_pwa_v3";
+    const HISTORY_KEY = "qr_tool_history_ios_pwa_img_v1";
     const HISTORY_MAX = 20;
 
     const norm = (s) => (s || "").toString().trim();
@@ -284,36 +251,44 @@
       renderHistory();
     }
 
+    function showEmptyQR(){
+      qr.innerHTML = '<div id="qrText">QR</div>';
+    }
+
     async function draw(value, shouldSave=true){
       const v = norm(value);
       lenEl.textContent = String(v.length);
 
       if(!v){
-        qr.innerHTML = '<div id="qrText">QR</div>';
+        showEmptyQR();
         setMsg("");
         setPill("Ready");
         return;
       }
 
-      qr.innerHTML = "";
       try{
+        setPill("OK");
+        // Render nét theo DPR, nhưng hiển thị đúng DISPLAY_SIZE
         const dpr = window.devicePixelRatio || 1;
         const px = Math.floor(DISPLAY_SIZE * dpr);
 
-        const canvas = document.createElement("canvas");
-        await QRCode.toCanvas(canvas, v, { width: px, margin: MARGIN });
+        const dataUrl = await QRCode.toDataURL(v, { width: px, margin: MARGIN });
 
-        canvas.style.width = DISPLAY_SIZE + "px";
-        canvas.style.height = DISPLAY_SIZE + "px";
+        qr.innerHTML = "";
+        const img = document.createElement("img");
+        img.id = "qrImg";
+        img.src = dataUrl;
+        img.alt = "QR";
+        img.style.width = DISPLAY_SIZE + "px";
+        img.style.height = DISPLAY_SIZE + "px";
 
-        qr.appendChild(canvas);
+        qr.appendChild(img);
         setMsg("");
-        setPill("OK");
 
         if (shouldSave) pushHistory(v);
       }catch(e){
         console.error(e);
-        qr.innerHTML = '<div id="qrText">QR</div>';
+        showEmptyQR();
         setMsg("Lỗi");
         setPill("Error");
       }
@@ -365,6 +340,7 @@
       setPill("Ready");
     });
 
+    // init
     renderHistory();
     draw("", false);
   </script>

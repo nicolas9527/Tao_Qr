@@ -90,17 +90,15 @@
       pointer-events:none;
     }
 
-    /* QR ảnh để nhấn giữ lưu */
+    /* QR ảnh để nhấn giữ */
     #qrImg{
       display:block;
-      width:300px;
-      height:300px;
-      max-width:100%;
-      position:relative;
-      z-index:1;
+      width:300px;height:300px;max-width:100%;
+      position:relative;z-index:1;
       border-radius:10px;
-      /* ảnh QR không cần smoothing */
       image-rendering: pixelated;
+      -webkit-touch-callout: default; /* cho iOS có thể hiện menu nếu hỗ trợ */
+      user-select:none;
     }
 
     #qrText{position:relative;z-index:1;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.3px;user-select:none}
@@ -204,8 +202,9 @@
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
+    const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_ios_pwa_img_v1";
+    const HISTORY_KEY = "qr_tool_history_ios_pwa_img_v2";
     const HISTORY_MAX = 20;
 
     const norm = (s) => (s || "").toString().trim();
@@ -230,6 +229,7 @@
     }
 
     let history = loadHistory();
+    let currentDataUrl = ""; // để fallback tải ảnh khi iOS không hiện menu
 
     function renderHistory(){
       if (!history.length){
@@ -252,7 +252,45 @@
     }
 
     function showEmptyQR(){
+      currentDataUrl = "";
       qr.innerHTML = '<div id="qrText">QR</div>';
+    }
+
+    function fallbackDownloadPNG(){
+      if (!currentDataUrl) return;
+      // tải PNG cực gọn
+      const a = document.createElement("a");
+      a.href = currentDataUrl;
+      a.download = "qr.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setMsg("Đã tải PNG");
+      setTimeout(()=>setMsg(""), 900);
+    }
+
+    function attachLongPress(img){
+      let timer = null;
+
+      // Long-press (touch)
+      img.addEventListener("touchstart", () => {
+        timer = setTimeout(() => {
+          // Nếu iOS không hiện menu lưu ảnh trong PWA thì fallback tải PNG
+          fallbackDownloadPNG();
+        }, LONGPRESS_MS);
+      }, { passive:true });
+
+      ["touchend","touchcancel","touchmove"].forEach(ev => {
+        img.addEventListener(ev, () => {
+          if (timer) { clearTimeout(timer); timer = null; }
+        }, { passive:true });
+      });
+
+      // Context menu (Safari long-press) -> nếu bạn muốn luôn tải thay vì menu
+      // Ở đây chỉ fallback nhẹ: nếu menu không hiện thì long-press touchstart đã xử lý.
+      img.addEventListener("contextmenu", () => {
+        // không preventDefault để Safari vẫn có thể hiện “Lưu ảnh” khi nó hỗ trợ
+      });
     }
 
     async function draw(value, shouldSave=true){
@@ -267,12 +305,11 @@
       }
 
       try{
-        setPill("OK");
-        // Render nét theo DPR, nhưng hiển thị đúng DISPLAY_SIZE
         const dpr = window.devicePixelRatio || 1;
         const px = Math.floor(DISPLAY_SIZE * dpr);
 
         const dataUrl = await QRCode.toDataURL(v, { width: px, margin: MARGIN });
+        currentDataUrl = dataUrl;
 
         qr.innerHTML = "";
         const img = document.createElement("img");
@@ -283,7 +320,10 @@
         img.style.height = DISPLAY_SIZE + "px";
 
         qr.appendChild(img);
+        attachLongPress(img);
+
         setMsg("");
+        setPill("OK");
 
         if (shouldSave) pushHistory(v);
       }catch(e){
@@ -295,10 +335,10 @@
     }
 
     // auto update khi gõ (không lưu lịch sử)
-    let timer = null;
+    let typingTimer = null;
     t.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => draw(t.value, false), 120);
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => draw(t.value, false), 120);
     });
 
     document.getElementById('gen').addEventListener('click', () => draw(t.value, true));

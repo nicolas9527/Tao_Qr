@@ -6,7 +6,6 @@
         content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>QR Tool</title>
 
-  <!-- iOS / PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f6f8ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -249,10 +248,9 @@
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
-    const LONGPRESS_MS = 450;
 
     // Lưu lịch sử dạng object: { value: "...", ts: 1700000000000 }
-    const HISTORY_KEY = "qr_tool_history_list_ts_v1";
+    const HISTORY_KEY = "qr_tool_history_list_ts_v2";
     const HISTORY_MAX = 50;
 
     const norm = (s) => (s || "").toString().trim();
@@ -266,7 +264,6 @@
     }
 
     function fmtTime(ts){
-      // hiển thị: dd/mm HH:MM
       const d = new Date(ts);
       const dd = String(d.getDate()).padStart(2,"0");
       const mm = String(d.getMonth()+1).padStart(2,"0");
@@ -280,10 +277,12 @@
         const raw = localStorage.getItem(HISTORY_KEY);
         const arr = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(arr)) return [];
-        // migrate old string[] (nếu có)
+
+        // migrate nếu lỡ có string[]
         if (arr.length && typeof arr[0] === "string"){
           return arr.map(v => ({ value: String(v), ts: Date.now() }));
         }
+
         return arr
           .filter(x => x && typeof x.value === "string" && typeof x.ts === "number")
           .slice(0, HISTORY_MAX);
@@ -297,7 +296,6 @@
     }
 
     let history = loadHistory();
-    let currentDataUrl = "";
 
     function renderHistory(){
       if (!history.length){
@@ -319,8 +317,8 @@
       const v = norm(value);
       if (!v) return;
 
-      // đưa item trùng lên đầu và cập nhật thời gian
       const now = Date.now();
+      // đưa item trùng lên đầu và cập nhật ts
       const filtered = history.filter(it => it.value !== v);
       history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
 
@@ -329,33 +327,7 @@
     }
 
     function showEmptyQR(){
-      currentDataUrl = "";
       qr.innerHTML = '<div id="qrText">QR</div>';
-    }
-
-    function fallbackDownloadPNG(){
-      if (!currentDataUrl) return;
-      const a = document.createElement("a");
-      a.href = currentDataUrl;
-      a.download = "qr.png";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setMsg("Đã tải PNG");
-      setTimeout(()=>setMsg(""), 900);
-    }
-
-    function attachLongPress(img){
-      let timer = null;
-      img.addEventListener("touchstart", () => {
-        timer = setTimeout(() => fallbackDownloadPNG(), LONGPRESS_MS);
-      }, { passive:true });
-
-      ["touchend","touchcancel","touchmove"].forEach(ev => {
-        img.addEventListener(ev, () => {
-          if (timer) { clearTimeout(timer); timer = null; }
-        }, { passive:true });
-      });
     }
 
     async function draw(value, shouldSave=true){
@@ -374,7 +346,6 @@
         const px = Math.floor(DISPLAY_SIZE * dpr);
 
         const dataUrl = await QRCode.toDataURL(v, { width: px, margin: MARGIN });
-        currentDataUrl = dataUrl;
 
         qr.innerHTML = "";
         const img = document.createElement("img");
@@ -384,8 +355,6 @@
         img.style.width = DISPLAY_SIZE + "px";
         img.style.height = DISPLAY_SIZE + "px";
         qr.appendChild(img);
-
-        attachLongPress(img);
 
         setMsg("");
         setPill("OK");

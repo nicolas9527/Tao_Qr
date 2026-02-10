@@ -330,22 +330,60 @@
       overflow:auto;
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
+      background: rgba(255,255,255,.35);
     }
 
-    .hitem{
+    /* ===== SWIPE ROW ===== */
+    .row{
+      position:relative;
+      overflow:hidden;
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.35);
+    }
+    .row:first-child{border-top:none}
+
+    .rowActions{
+      position:absolute;
+      inset:0 0 0 auto;
+      width:92px;
+      display:flex;
+      align-items:stretch;
+      justify-content:flex-end;
+      pointer-events:none; /* chỉ bật khi open */
+    }
+
+    .rowActions button{
+      width:92px;
+      border-radius:0;
+      box-shadow:none;
+      font-size:13px;
+      font-weight:1000;
+      padding:0;
+      margin:0;
+      background: rgba(255, 77, 79, .90);
+      color:#fff;
+      border-left:1px solid rgba(255,255,255,.35);
+    }
+    .row.open .rowActions{pointer-events:auto}
+
+    .rowMain{
+      position:relative;
       display:flex;
       gap:10px;
       padding:12px 12px;
-      border-top:1px solid var(--line);
-      cursor:pointer;
-      user-select:none;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
-      background: rgba(255,255,255,.4);
       align-items:flex-start;
+      transform: translateX(0px);
+      transition: transform .18s ease;
+      will-change: transform;
+      touch-action: pan-y; /* cho cuộn dọc bình thường */
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      background: rgba(255,255,255,.35);
     }
-    .hitem:first-child{border-top:none}
-    .hitem:active{background: rgba(47,107,255,.08)}
+
+    .row.open .rowMain{
+      transform: translateX(-92px);
+    }
 
     .hleft{
       min-width:38px;
@@ -374,21 +412,6 @@
       color:var(--muted);
       font-weight:900;
     }
-
-    .hdel{
-      flex:0 0 auto;
-      width:34px;height:34px;
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: rgba(255, 77, 79, .10);
-      border: 1px solid rgba(255, 77, 79, .20);
-      color: var(--danger);
-      font-weight:1000;
-      user-select:none;
-    }
-    .hdel:active{transform:translateY(1px)}
 
     .empty{
       padding:12px;
@@ -472,7 +495,7 @@
               </div>
             </div>
 
-            <div class="history">
+            <div class="history" id="historyBox">
               <div class="hTop">
                 <div class="h">Lịch sử</div>
                 <button class="btnDanger" id="clearHistory" type="button" style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
@@ -517,14 +540,19 @@
 
     const pill = document.getElementById('pill');
     const dot = document.getElementById('dot');
+
     const hlist = document.getElementById('hlist');
+    const historyBox = document.getElementById('historyBox');
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_list_ts_ui_del_v1";
+    const HISTORY_KEY = "qr_tool_history_swipe_v1";
     const HISTORY_MAX = 80;
+
+    const SWIPE_OPEN_PX = 56;   // vuốt >= ngưỡng -> mở
+    const SWIPE_ACTION_W = 92;  // độ rộng nút xoá
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -589,6 +617,14 @@
 
     let history = loadHistory();
     let currentDataUrl = "";
+    let openRowEl = null; // chỉ mở 1 row
+
+    function closeOpenRow(){
+      if (openRowEl){
+        openRowEl.classList.remove("open");
+        openRowEl = null;
+      }
+    }
 
     function renderHistory(){
       if (!history.length){
@@ -596,13 +632,18 @@
         return;
       }
       hlist.innerHTML = history.map((it, idx) => `
-        <div class="hitem" data-idx="${idx}">
-          <div class="hleft">${idx+1}</div>
-          <div class="hmain">
-            <div class="htext">${escapeHtml(it.value)}</div>
-            <div class="htime">${fmtTime(it.ts)}</div>
+        <div class="row" data-idx="${idx}">
+          <div class="rowActions">
+            <button type="button" data-action="delete" data-idx="${idx}">Xoá</button>
           </div>
-          <div class="hdel" role="button" aria-label="Xoá" data-del="${idx}">🗑</div>
+
+          <div class="rowMain" data-action="open" data-idx="${idx}">
+            <div class="hleft">${idx+1}</div>
+            <div class="hmain">
+              <div class="htext">${escapeHtml(it.value)}</div>
+              <div class="htime">${fmtTime(it.ts)}</div>
+            </div>
+          </div>
         </div>
       `).join("");
     }
@@ -624,6 +665,7 @@
       renderHistory();
       setMsg("Đã xoá 1 mục");
       setTimeout(()=>setMsg(""), 700);
+      closeOpenRow();
     }
 
     function showEmptyQR(){
@@ -697,15 +739,132 @@
       }
     }
 
-    // auto update khi gõ (không lưu lịch sử)
-    let typingTimer = null;
-    t.addEventListener('input', () => {
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => draw(t.value, false), 120);
+    // ===== Swipe handler (only for history rows) =====
+    function bindSwipe(){
+      let startX = 0, startY = 0;
+      let dragging = false;
+      let row = null;
+
+      function onStart(e){
+        const target = e.target.closest(".rowMain");
+        if (!target) return;
+
+        row = target.closest(".row");
+        if (!row) return;
+
+        // nếu chạm row khác khi đang open -> đóng row cũ
+        if (openRowEl && openRowEl !== row) closeOpenRow();
+
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        dragging = false;
+      }
+
+      function onMove(e){
+        if (!row) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        // chỉ bắt swipe ngang khi dx đủ lớn hơn dy
+        if (!dragging){
+          if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2){
+            dragging = true;
+            // khi bắt swipe ngang, chặn scroll dọc
+            e.preventDefault();
+          } else {
+            return;
+          }
+        }
+
+        // dragging = true
+        e.preventDefault();
+
+        if (dx < 0){
+          // vuốt trái: tạm thời translate theo dx, giới hạn -SWIPE_ACTION_W
+          const x = Math.max(dx, -SWIPE_ACTION_W);
+          row.querySelector(".rowMain").style.transition = "none";
+          row.querySelector(".rowMain").style.transform = `translateX(${x}px)`;
+        } else {
+          // vuốt phải: kéo về 0
+          const x = Math.min(dx - SWIPE_ACTION_W, 0); // nếu đang mở, bắt đầu từ -W
+          row.querySelector(".rowMain").style.transition = "none";
+          row.querySelector(".rowMain").style.transform = `translateX(${x}px)`;
+        }
+      }
+
+      function onEnd(){
+        if (!row) return;
+
+        const main = row.querySelector(".rowMain");
+        // lấy transform hiện tại
+        const m = /translateX\(([-0-9.]+)px\)/.exec(main.style.transform || "");
+        const curX = m ? parseFloat(m[1]) : (row.classList.contains("open") ? -SWIPE_ACTION_W : 0);
+
+        main.style.transition = "";
+        main.style.transform = "";
+
+        if (dragging){
+          // quyết định open/close
+          if (curX <= -SWIPE_OPEN_PX){
+            row.classList.add("open");
+            openRowEl = row;
+          } else {
+            row.classList.remove("open");
+            if (openRowEl === row) openRowEl = null;
+          }
+        }
+
+        dragging = false;
+        row = null;
+      }
+
+      // touch events (passive false needed for preventDefault)
+      hlist.addEventListener("touchstart", onStart, { passive:true });
+      hlist.addEventListener("touchmove", onMove, { passive:false });
+      hlist.addEventListener("touchend", onEnd, { passive:true });
+      hlist.addEventListener("touchcancel", onEnd, { passive:true });
+    }
+
+    // click handling
+    hlist.addEventListener("click", (e) => {
+      const btn = e.target.closest('[data-action="delete"]');
+      if (btn){
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = Number(btn.getAttribute("data-idx"));
+        deleteOne(idx);
+        return;
+      }
+
+      const main = e.target.closest('[data-action="open"]');
+      if (main){
+        // nếu row đang mở thì click vào main chỉ đóng (không nạp)
+        const row = main.closest(".row");
+        if (row && row.classList.contains("open")){
+          closeOpenRow();
+          return;
+        }
+
+        const idx = Number(main.getAttribute("data-idx"));
+        const it = history[idx];
+        if (!it) return;
+        t.value = it.value;
+        draw(it.value, false);
+      }
     });
 
+    // tap ra ngoài history để đóng row open
+    document.addEventListener("click", (e) => {
+      if (!openRowEl) return;
+      const inHistory = e.target.closest("#historyBox");
+      if (!inHistory) closeOpenRow();
+    });
+
+    // action buttons
     document.getElementById('gen').addEventListener('click', () => draw(t.value, true));
-    document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); setMsg(""); });
+    document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); setMsg(""); closeOpenRow(); });
     document.getElementById('paste').addEventListener('click', async () => {
       try{
         setStatus("working");
@@ -717,31 +876,12 @@
         const text = await navigator.clipboard.readText();
         t.value = text || "";
         draw(t.value, true);
+        closeOpenRow();
       }catch(e){
         console.error(e);
         setMsg("Clipboard error");
         setStatus("error");
       }
-    });
-
-    // Click lịch sử: nếu bấm nút xoá -> xoá; còn lại -> nạp lại
-    hlist.addEventListener("click", (e) => {
-      const del = e.target.closest("[data-del]");
-      if (del){
-        e.stopPropagation();
-        e.preventDefault();
-        const idx = Number(del.getAttribute("data-del"));
-        deleteOne(idx);
-        return;
-      }
-
-      const item = e.target.closest(".hitem");
-      if (!item) return;
-      const idx = Number(item.getAttribute("data-idx"));
-      const it = history[idx];
-      if (!it) return;
-      t.value = it.value;
-      draw(it.value, false);
     });
 
     document.getElementById("clearHistory").addEventListener("click", () => {
@@ -750,10 +890,20 @@
       renderHistory();
       setMsg("Đã xoá tất cả");
       setTimeout(()=>setMsg(""), 700);
+      closeOpenRow();
       setStatus("ready");
     });
 
+    // auto update khi gõ (không lưu lịch sử)
+    let typingTimer = null;
+    t.addEventListener('input', () => {
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => draw(t.value, false), 120);
+    });
+
+    // init
     renderHistory();
+    bindSwipe();
     draw("", false);
     setStatus("ready");
   </script>

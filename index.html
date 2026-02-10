@@ -23,7 +23,6 @@
 
       --blue:#2f6bff;
       --blue2:#1d4ed8;
-      --blueSoft: rgba(47, 107, 255, .12);
 
       --danger:#b42318;
       --dangerBg: rgba(255, 77, 79, .12);
@@ -60,7 +59,6 @@
 
     .wrap{max-width:760px;margin:0 auto}
 
-    /* ===== APP CARD ===== */
     .app{
       background: rgba(255,255,255,.72);
       border: 1px solid rgba(255,255,255,.55);
@@ -135,7 +133,6 @@
 
     .content{padding:0 14px 14px}
 
-    /* ===== INPUT CARD ===== */
     .panel{
       background: rgba(255,255,255,.82);
       border: 1px solid var(--line);
@@ -185,9 +182,7 @@
     }
     textarea:focus{
       border-color: rgba(47,107,255,.35);
-      box-shadow:
-        0 0 0 4px rgba(47,107,255,.12),
-        inset 0 1px 0 rgba(255,255,255,.75);
+      box-shadow: 0 0 0 4px rgba(47,107,255,.12), inset 0 1px 0 rgba(255,255,255,.75);
     }
 
     .actions{
@@ -216,24 +211,10 @@
       box-shadow: 0 10px 22px rgba(2,6,23,.07);
     }
     button:active{transform:translateY(1px)}
-    .btnPrimary{
-      color:#fff;
-      background: linear-gradient(135deg, var(--blue), var(--blue2));
-    }
-    .btnSoft{
-      color:#0b3d91;
-      background: rgba(47,107,255,.10);
-      border:1px solid rgba(47,107,255,.18);
-      box-shadow:none;
-    }
-    .btnDanger{
-      color: var(--danger);
-      background: var(--dangerBg);
-      border:1px solid var(--dangerLine);
-      box-shadow:none;
-    }
+    .btnPrimary{color:#fff;background: linear-gradient(135deg, var(--blue), var(--blue2));}
+    .btnSoft{color:#0b3d91;background: rgba(47,107,255,.10);border:1px solid rgba(47,107,255,.18);box-shadow:none;}
+    .btnDanger{color: var(--danger);background: var(--dangerBg);border:1px solid var(--dangerLine);box-shadow:none;}
 
-    /* ===== QR CARD ===== */
     .grid{
       margin-top:12px;
       display:grid;
@@ -317,7 +298,6 @@
       border: 1px solid var(--line);
     }
 
-    /* ===== HISTORY ===== */
     .history{
       margin-top:12px;
       background: rgba(255,255,255,.82);
@@ -362,6 +342,7 @@
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
       background: rgba(255,255,255,.4);
+      align-items:flex-start;
     }
     .hitem:first-child{border-top:none}
     .hitem:active{background: rgba(47,107,255,.08)}
@@ -394,6 +375,21 @@
       font-weight:900;
     }
 
+    .hdel{
+      flex:0 0 auto;
+      width:34px;height:34px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(255, 77, 79, .10);
+      border: 1px solid rgba(255, 77, 79, .20);
+      color: var(--danger);
+      font-weight:1000;
+      user-select:none;
+    }
+    .hdel:active{transform:translateY(1px)}
+
     .empty{
       padding:12px;
       color: #94a3b8;
@@ -401,7 +397,6 @@
       font-weight:1000;
     }
 
-    /* ===== FOOTER MSG ===== */
     .foot{
       display:flex;
       justify-content:space-between;
@@ -434,9 +429,9 @@
           </div>
         </div>
 
-        <div class="status" id="status">
+        <div class="status">
           <span class="dot" id="dot"></span>
-          <span id="pill">OK</span>
+          <span id="pill">Ready</span>
         </div>
       </div>
 
@@ -481,7 +476,7 @@
               <div class="hTop">
                 <div class="h">Lịch sử</div>
                 <button class="btnDanger" id="clearHistory" type="button" style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
-                  Xoá
+                  Xoá tất cả
                 </button>
               </div>
               <div class="hlist" id="hlist"></div>
@@ -528,14 +523,13 @@
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_list_ts_ui_v1";
-    const HISTORY_MAX = 50;
+    const HISTORY_KEY = "qr_tool_history_list_ts_ui_del_v1";
+    const HISTORY_MAX = 80;
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
 
     function setStatus(mode){
-      // mode: ok, ready, error, working
       if (mode === "ready"){
         pill.textContent = "Ready";
         dot.style.background = "#94a3b8";
@@ -608,6 +602,7 @@
             <div class="htext">${escapeHtml(it.value)}</div>
             <div class="htime">${fmtTime(it.ts)}</div>
           </div>
+          <div class="hdel" role="button" aria-label="Xoá" data-del="${idx}">🗑</div>
         </div>
       `).join("");
     }
@@ -620,6 +615,15 @@
       history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
       saveHistory(history);
       renderHistory();
+    }
+
+    function deleteOne(idx){
+      if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
+      history.splice(idx, 1);
+      saveHistory(history);
+      renderHistory();
+      setMsg("Đã xoá 1 mục");
+      setTimeout(()=>setMsg(""), 700);
     }
 
     function showEmptyQR(){
@@ -701,7 +705,7 @@
     });
 
     document.getElementById('gen').addEventListener('click', () => draw(t.value, true));
-    document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); });
+    document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); setMsg(""); });
     document.getElementById('paste').addEventListener('click', async () => {
       try{
         setStatus("working");
@@ -720,7 +724,17 @@
       }
     });
 
+    // Click lịch sử: nếu bấm nút xoá -> xoá; còn lại -> nạp lại
     hlist.addEventListener("click", (e) => {
+      const del = e.target.closest("[data-del]");
+      if (del){
+        e.stopPropagation();
+        e.preventDefault();
+        const idx = Number(del.getAttribute("data-del"));
+        deleteOne(idx);
+        return;
+      }
+
       const item = e.target.closest(".hitem");
       if (!item) return;
       const idx = Number(item.getAttribute("data-idx"));
@@ -734,7 +748,8 @@
       history = [];
       saveHistory(history);
       renderHistory();
-      setMsg("");
+      setMsg("Đã xoá tất cả");
+      setTimeout(()=>setMsg(""), 700);
       setStatus("ready");
     });
 

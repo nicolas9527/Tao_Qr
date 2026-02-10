@@ -15,77 +15,279 @@
 
   <style>
     :root{
-      --bg:#f6f8ff; --card:#ffffff; --text:#0f172a; --muted:#64748b;
-      --border:#e2e8f0; --shadow:0 14px 35px rgba(2,6,23,.10);
-      --blue:#1677ff; --blue2:#0b5ed7; --chip:#eef5ff; --chipBorder:#d9e7ff;
-      --dangerBg:#ffecec; --dangerBorder:#ffd2d2; --dangerText:#b42318; --radius:18px;
-    }
-    *{box-sizing:border-box}
+      --bg:#f5f7ff;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#6b7280;
+      --line: rgba(15, 23, 42, .08);
 
+      --blue:#2f6bff;
+      --blue2:#1d4ed8;
+      --blueSoft: rgba(47, 107, 255, .12);
+
+      --danger:#b42318;
+      --dangerBg: rgba(255, 77, 79, .12);
+      --dangerLine: rgba(255, 77, 79, .30);
+
+      --radius:22px;
+      --shadow: 0 18px 45px rgba(2,6,23,.10);
+      --shadow2: 0 10px 24px rgba(2,6,23,.08);
+    }
+
+    *{box-sizing:border-box}
     html, body{
       width:100%;
       overflow-x:hidden;
       overscroll-behavior-x:none;
       -webkit-text-size-adjust:100%;
       touch-action:pan-y;
+      background:var(--bg);
     }
 
     body{
       margin:0;
-      padding: calc(18px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+      padding: calc(16px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
       color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 12% -10%, #e7f0ff 0%, transparent 60%),
-        radial-gradient(1200px 600px at 95% 0%, #eaf9ff 0%, transparent 60%),
-        var(--bg);
       -webkit-font-smoothing:antialiased;
+
+      background:
+        radial-gradient(900px 520px at 10% -10%, rgba(47,107,255,.22) 0%, transparent 65%),
+        radial-gradient(900px 520px at 92% 0%, rgba(0,208,255,.16) 0%, transparent 70%),
+        radial-gradient(900px 520px at 50% 110%, rgba(255, 77, 79, .10) 0%, transparent 60%),
+        var(--bg);
     }
 
     .wrap{max-width:760px;margin:0 auto}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
-    .top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
-    .brand{display:flex;flex-direction:column;gap:2px}
-    .title{font-size:16px;font-weight:900;letter-spacing:.2px;margin:0;line-height:1.2}
-    .sub{margin:0;color:var(--muted);font-size:12px;line-height:1.3}
-    .pill{align-self:flex-start;padding:7px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--chipBorder);color:#0b3d91;font-size:12px;font-weight:800;white-space:nowrap;user-select:none}
 
-    .grid{display:grid;grid-template-columns:1fr 320px;gap:12px;align-items:start}
-    @media (max-width:740px){.grid{grid-template-columns:1fr}}
+    /* ===== APP CARD ===== */
+    .app{
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:14px 14px 10px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width:0;
+    }
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(47,107,255,.18), rgba(0,208,255,.14));
+      border:1px solid rgba(47,107,255,.18);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: var(--shadow2);
+      flex:0 0 auto;
+    }
+    .logo svg{width:22px;height:22px;opacity:.9}
+    .titles{min-width:0}
+    .title{
+      margin:0;
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+    .sub{
+      margin:2px 0 0;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.75);
+      border:1px solid var(--line);
+      box-shadow: 0 8px 18px rgba(2,6,23,.06);
+      user-select:none;
+      flex:0 0 auto;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;
+      background:#10b981;
+      box-shadow: 0 0 0 4px rgba(16,185,129,.18);
+    }
+    .status span{
+      font-size:12px;
+      font-weight:1000;
+      color:#0f172a;
+    }
+
+    .content{padding:0 14px 14px}
+
+    /* ===== INPUT CARD ===== */
+    .panel{
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(2,6,23,.06);
+      overflow:hidden;
+    }
+    .panelInner{padding:12px}
+
+    .labelRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+    .lenPill{
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(47,107,255,.10);
+      border:1px solid rgba(47,107,255,.18);
+      color:#1d4ed8;
+      font-weight:1000;
+      font-size:12px;
+      user-select:none;
+    }
 
     textarea{
-      width:100%;min-height:120px;padding:12px 12px 40px;
-      font-size:16px;line-height:1.35;
-      border:1px solid var(--border);border-radius:16px;outline:none;
-      resize:vertical;background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
-      overflow-x:hidden;white-space:pre-wrap;word-break:break-word;touch-action:pan-y;
+      width:100%;
+      min-height:96px;
+      padding:12px 12px 14px;
+      font-size:16px;
+      line-height:1.35;
+      border-radius:16px;
+      border:1px solid rgba(15, 23, 42, .10);
+      outline:none;
+      resize:vertical;
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.75));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+      overflow-x:hidden;
+      white-space:pre-wrap;
+      word-break:break-word;
+      touch-action:pan-y;
     }
-    textarea:focus{border-color:rgba(22,119,255,.55);box-shadow:0 0 0 4px rgba(22,119,255,.12)}
+    textarea:focus{
+      border-color: rgba(47,107,255,.35);
+      box-shadow:
+        0 0 0 4px rgba(47,107,255,.12),
+        inset 0 1px 0 rgba(255,255,255,.75);
+    }
 
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
     button{
-      appearance:none;border:none;border-radius:14px;padding:12px 14px;
-      font-size:14px;font-weight:900;cursor:pointer;transition:.15s;
-      display:inline-flex;align-items:center;gap:8px;user-select:none;
+      appearance:none;
+      border:none;
+      border-radius:16px;
+      padding:12px 12px;
+      font-size:14px;
+      font-weight:1000;
+      cursor:pointer;
+      transition:.12s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      user-select:none;
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
+      box-shadow: 0 10px 22px rgba(2,6,23,.07);
     }
     button:active{transform:translateY(1px)}
-    .primary{background:var(--blue);color:#fff}
-    .primary:hover{background:var(--blue2)}
-    .ghost{background:var(--chip);color:#0b3d91;border:1px solid var(--chipBorder)}
-    .danger{background:var(--dangerBg);color:var(--dangerText);border:1px solid var(--dangerBorder)}
-    .mini{padding:9px 10px;border-radius:12px;font-size:12px}
+    .btnPrimary{
+      color:#fff;
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+    }
+    .btnSoft{
+      color:#0b3d91;
+      background: rgba(47,107,255,.10);
+      border:1px solid rgba(47,107,255,.18);
+      box-shadow:none;
+    }
+    .btnDanger{
+      color: var(--danger);
+      background: var(--dangerBg);
+      border:1px solid var(--dangerLine);
+      box-shadow:none;
+    }
+
+    /* ===== QR CARD ===== */
+    .grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width:740px){ .grid{grid-template-columns:1fr} }
+
+    .qrWrap{
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(2,6,23,.06);
+      overflow:hidden;
+    }
+    .qrHead{
+      padding:10px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(47,107,255,.08), rgba(255,255,255,0));
+    }
+    .qrHead .h{
+      font-size:12px;
+      font-weight:1000;
+      color:#0f172a;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+    }
+    .hint{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
     .qrbox{
-      border:1px dashed #cfe0ff;border-radius:16px;min-height:320px;
-      display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(180deg,#f7fbff 0%, #ffffff 100%);
+      padding:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:320px;
       position:relative;
     }
     .qrbox::after{
-      content:"";position:absolute;inset:-40px;
-      background: radial-gradient(400px 200px at 50% 10%, rgba(22,119,255,.10), transparent 60%);
+      content:"";
+      position:absolute;
+      inset:-60px;
+      background: radial-gradient(520px 260px at 50% 10%, rgba(47,107,255,.16), transparent 60%);
       pointer-events:none;
     }
 
@@ -93,45 +295,76 @@
       display:block;
       width:300px;height:300px;max-width:100%;
       position:relative;z-index:1;
-      border-radius:10px;
+      border-radius:18px;
+      background:#fff;
+      border: 1px solid rgba(15, 23, 42, .08);
+      box-shadow: 0 16px 34px rgba(2,6,23,.10);
       image-rendering: pixelated;
       -webkit-touch-callout: default;
       user-select:none;
     }
-    #qrText{position:relative;z-index:1;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.3px;user-select:none}
+    #qrText{
+      position:relative;z-index:1;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:1000;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      user-select:none;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid var(--line);
+    }
 
-    .meta{margin-top:10px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px}
-    #msg{min-height:16px}
-
-    /* ===== HISTORY: danh sách cuộn + có thời gian ===== */
-    .history{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
-    .hhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
-    .htitle{font-size:12px;color:var(--muted);font-weight:900;letter-spacing:.5px;text-transform:uppercase}
-
-    .hscroll{
-      border:1px solid var(--border);
-      border-radius:16px;
-      background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
+    /* ===== HISTORY ===== */
+    .history{
+      margin-top:12px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px rgba(2,6,23,.06);
       overflow:hidden;
     }
+
+    .hTop{
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(0,208,255,.10), rgba(255,255,255,0));
+    }
+
+    .hTop .h{
+      font-size:12px;
+      font-weight:1000;
+      color:#0f172a;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+    }
+
     .hlist{
       max-height:260px;
       overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
     }
+
     .hitem{
       display:flex;
       gap:10px;
       padding:12px 12px;
-      border-top:1px solid var(--border);
+      border-top:1px solid var(--line);
       cursor:pointer;
       user-select:none;
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
+      background: rgba(255,255,255,.4);
     }
     .hitem:first-child{border-top:none}
-    .hitem:active{background:#f2f7ff}
+    .hitem:active{background: rgba(47,107,255,.08)}
 
     .hleft{
       min-width:38px;
@@ -139,15 +372,15 @@
       align-items:flex-start;
       justify-content:center;
       padding-top:2px;
-      color:#0b3d91;
+      color:#1d4ed8;
       font-weight:1000;
-      opacity:.85;
+      opacity:.9;
       font-size:12px;
     }
     .hmain{flex:1;min-width:0}
     .htext{
       font-size:13px;
-      font-weight:900;
+      font-weight:1000;
       color:#0b3d91;
       line-height:1.2;
       white-space:nowrap;
@@ -158,59 +391,102 @@
       margin-top:4px;
       font-size:11px;
       color:var(--muted);
-      font-weight:800;
+      font-weight:900;
     }
 
     .empty{
       padding:12px;
-      color:#94a3b8;
+      color: #94a3b8;
+      font-size:12px;
+      font-weight:1000;
+    }
+
+    /* ===== FOOTER MSG ===== */
+    .foot{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      color:var(--muted);
       font-size:12px;
       font-weight:800;
+      padding: 0 2px;
+      min-height:18px;
     }
+    #msg{min-height:18px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <div class="top">
+    <div class="app">
+      <div class="header">
         <div class="brand">
-          <p class="title">QR Tool</p>
-          <p class="sub">Clipboard / nhập tay → QR + lịch sử</p>
-        </div>
-        <div class="pill" id="pill">Ready</div>
-      </div>
-
-      <div class="grid">
-        <div>
-          <textarea id="t" placeholder="Dán nội dung..."></textarea>
-
-          <div class="toolbar">
-            <button class="primary" id="paste" type="button">📋 Dán</button>
-            <button class="ghost" id="gen" type="button">⚡ Tạo QR</button>
-            <button class="danger" id="clr" type="button">🗑️ Xoá</button>
+          <div class="logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 2h2v2h-2v-2Zm-2-2h2v2h-2v-2Zm4 4h2v2h-2v-2Zm2-4h2v2h-2v-2Zm-4-2h6v6h-6v-6Z" fill="rgba(29,78,216,.95)"/>
+              <path d="M6 6h2v2H6V6Zm10 0h2v2h-2V6ZM6 16h2v2H6v-2Z" fill="rgba(0,208,255,.9)"/>
+            </svg>
           </div>
-
-          <div class="meta">
-            <div>Độ dài: <b id="len">0</b></div>
-            <div id="msg"></div>
+          <div class="titles">
+            <p class="title">QR Tool</p>
+            <p class="sub">Clipboard / nhập tay → QR + lịch sử</p>
           </div>
         </div>
 
-        <div>
-          <div class="qrbox" id="qr">
-            <div id="qrText">QR</div>
-          </div>
+        <div class="status" id="status">
+          <span class="dot" id="dot"></span>
+          <span id="pill">OK</span>
         </div>
       </div>
 
-      <div class="history">
-        <div class="hhead">
-          <div class="htitle">Lịch sử</div>
-          <button class="danger mini" id="clearHistory" type="button">Xoá</button>
-        </div>
+      <div class="content">
+        <div class="grid">
+          <!-- LEFT -->
+          <div class="panel">
+            <div class="panelInner">
+              <div class="labelRow">
+                <div>Nhập nội dung</div>
+                <div class="lenPill">Độ dài: <span id="len">0</span></div>
+              </div>
 
-        <div class="hscroll">
-          <div class="hlist" id="hlist"></div>
+              <textarea id="t" placeholder="Dán nội dung..."></textarea>
+
+              <div class="actions">
+                <button class="btnPrimary" id="paste" type="button">📋 Dán</button>
+                <button class="btnSoft" id="gen" type="button">⚡ Tạo QR</button>
+                <button class="btnDanger" id="clr" type="button">🗑️ Xoá</button>
+              </div>
+
+              <div class="foot">
+                <div id="msg"></div>
+                <div class="hint">Nhấn giữ QR để lưu</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT -->
+          <div>
+            <div class="qrWrap">
+              <div class="qrHead">
+                <div class="h">QR</div>
+                <div class="hint">Tự nét theo màn hình</div>
+              </div>
+              <div class="qrbox" id="qr">
+                <div id="qrText">QR</div>
+              </div>
+            </div>
+
+            <div class="history">
+              <div class="hTop">
+                <div class="h">Lịch sử</div>
+                <button class="btnDanger" id="clearHistory" type="button" style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
+                  Xoá
+                </button>
+              </div>
+              <div class="hlist" id="hlist"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -243,19 +519,45 @@
     const qr = document.getElementById('qr');
     const msg = document.getElementById('msg');
     const lenEl = document.getElementById('len');
+
     const pill = document.getElementById('pill');
+    const dot = document.getElementById('dot');
     const hlist = document.getElementById('hlist');
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
+    const LONGPRESS_MS = 450;
 
-    // Lưu lịch sử dạng object: { value: "...", ts: 1700000000000 }
-    const HISTORY_KEY = "qr_tool_history_list_ts_v2";
+    const HISTORY_KEY = "qr_tool_history_list_ts_ui_v1";
     const HISTORY_MAX = 50;
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
-    const setPill = (s="") => pill.textContent = s;
+
+    function setStatus(mode){
+      // mode: ok, ready, error, working
+      if (mode === "ready"){
+        pill.textContent = "Ready";
+        dot.style.background = "#94a3b8";
+        dot.style.boxShadow = "0 0 0 4px rgba(148,163,184,.18)";
+        return;
+      }
+      if (mode === "working"){
+        pill.textContent = "…";
+        dot.style.background = "#f59e0b";
+        dot.style.boxShadow = "0 0 0 4px rgba(245,158,11,.18)";
+        return;
+      }
+      if (mode === "error"){
+        pill.textContent = "Error";
+        dot.style.background = "#ef4444";
+        dot.style.boxShadow = "0 0 0 4px rgba(239,68,68,.18)";
+        return;
+      }
+      pill.textContent = "OK";
+      dot.style.background = "#10b981";
+      dot.style.boxShadow = "0 0 0 4px rgba(16,185,129,.18)";
+    }
 
     function escapeHtml(s){
       return String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -277,12 +579,9 @@
         const raw = localStorage.getItem(HISTORY_KEY);
         const arr = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(arr)) return [];
-
-        // migrate nếu lỡ có string[]
         if (arr.length && typeof arr[0] === "string"){
           return arr.map(v => ({ value: String(v), ts: Date.now() }));
         }
-
         return arr
           .filter(x => x && typeof x.value === "string" && typeof x.ts === "number")
           .slice(0, HISTORY_MAX);
@@ -290,12 +589,12 @@
         return [];
       }
     }
-
     function saveHistory(arr){
       localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
     }
 
     let history = loadHistory();
+    let currentDataUrl = "";
 
     function renderHistory(){
       if (!history.length){
@@ -316,18 +615,41 @@
     function pushHistory(value){
       const v = norm(value);
       if (!v) return;
-
       const now = Date.now();
-      // đưa item trùng lên đầu và cập nhật ts
       const filtered = history.filter(it => it.value !== v);
       history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
-
       saveHistory(history);
       renderHistory();
     }
 
     function showEmptyQR(){
-      qr.innerHTML = '<div id="qrText">QR</div>';
+      currentDataUrl = "";
+      qr.innerHTML = `<div id="qrText">QR</div>`;
+    }
+
+    function fallbackDownloadPNG(){
+      if (!currentDataUrl) return;
+      const a = document.createElement("a");
+      a.href = currentDataUrl;
+      a.download = "qr.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setMsg("Đã tải PNG");
+      setTimeout(()=>setMsg(""), 900);
+    }
+
+    function attachLongPress(img){
+      let timer = null;
+      img.addEventListener("touchstart", () => {
+        timer = setTimeout(() => fallbackDownloadPNG(), LONGPRESS_MS);
+      }, { passive:true });
+
+      ["touchend","touchcancel","touchmove"].forEach(ev => {
+        img.addEventListener(ev, () => {
+          if (timer) { clearTimeout(timer); timer = null; }
+        }, { passive:true });
+      });
     }
 
     async function draw(value, shouldSave=true){
@@ -337,15 +659,17 @@
       if(!v){
         showEmptyQR();
         setMsg("");
-        setPill("Ready");
+        setStatus("ready");
         return;
       }
 
       try{
+        setStatus("working");
         const dpr = window.devicePixelRatio || 1;
         const px = Math.floor(DISPLAY_SIZE * dpr);
 
         const dataUrl = await QRCode.toDataURL(v, { width: px, margin: MARGIN });
+        currentDataUrl = dataUrl;
 
         qr.innerHTML = "";
         const img = document.createElement("img");
@@ -355,16 +679,17 @@
         img.style.width = DISPLAY_SIZE + "px";
         img.style.height = DISPLAY_SIZE + "px";
         qr.appendChild(img);
+        attachLongPress(img);
 
         setMsg("");
-        setPill("OK");
+        setStatus("ok");
 
         if (shouldSave) pushHistory(v);
       }catch(e){
         console.error(e);
         showEmptyQR();
         setMsg("Lỗi");
-        setPill("Error");
+        setStatus("error");
       }
     }
 
@@ -377,13 +702,12 @@
 
     document.getElementById('gen').addEventListener('click', () => draw(t.value, true));
     document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); });
-
     document.getElementById('paste').addEventListener('click', async () => {
       try{
-        setPill("Paste…");
+        setStatus("working");
         if(!navigator.clipboard?.readText){
           setMsg("No clipboard");
-          setPill("No");
+          setStatus("error");
           return;
         }
         const text = await navigator.clipboard.readText();
@@ -392,11 +716,10 @@
       }catch(e){
         console.error(e);
         setMsg("Clipboard error");
-        setPill("Error");
+        setStatus("error");
       }
     });
 
-    // Click item lịch sử -> dùng lại
     hlist.addEventListener("click", (e) => {
       const item = e.target.closest(".hitem");
       if (!item) return;
@@ -412,12 +735,12 @@
       saveHistory(history);
       renderHistory();
       setMsg("");
-      setPill("Ready");
+      setStatus("ready");
     });
 
-    // init
     renderHistory();
     draw("", false);
+    setStatus("ready");
   </script>
 </body>
 </html>

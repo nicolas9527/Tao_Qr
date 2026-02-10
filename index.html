@@ -90,40 +90,84 @@
       pointer-events:none;
     }
 
-    /* QR ảnh để nhấn giữ */
     #qrImg{
       display:block;
       width:300px;height:300px;max-width:100%;
       position:relative;z-index:1;
       border-radius:10px;
       image-rendering: pixelated;
-      -webkit-touch-callout: default; /* cho iOS có thể hiện menu nếu hỗ trợ */
+      -webkit-touch-callout: default;
       user-select:none;
     }
-
     #qrText{position:relative;z-index:1;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.3px;user-select:none}
 
     .meta{margin-top:10px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px}
     #msg{min-height:16px}
 
+    /* ===== HISTORY: danh sách cuộn + có thời gian ===== */
     .history{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
     .hhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
     .htitle{font-size:12px;color:var(--muted);font-weight:900;letter-spacing:.5px;text-transform:uppercase}
-    .hlist{display:flex;flex-wrap:wrap;gap:10px}
-    .chip{
-      max-width:100%;
-      display:inline-flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:999px;
-      background:var(--chip);border:1px solid var(--chipBorder);
-      color:#0b3d91;font-size:12px;font-weight:900;cursor:pointer;transition:.12s;
+
+    .hscroll{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fbfdff 0%, #ffffff 100%);
+      overflow:hidden;
+    }
+    .hlist{
+      max-height:260px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .hitem{
+      display:flex;
+      gap:10px;
+      padding:12px 12px;
+      border-top:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
     }
-    .chip:hover{transform:translateY(-1px)}
-    .chip:active{transform:translateY(0)}
-    .chip span{display:inline-block;max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .chip i{font-style:normal;opacity:.7;font-weight:1000}
-    .empty{color:#94a3b8;font-size:12px;font-weight:800;padding:8px 0}
+    .hitem:first-child{border-top:none}
+    .hitem:active{background:#f2f7ff}
+
+    .hleft{
+      min-width:38px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding-top:2px;
+      color:#0b3d91;
+      font-weight:1000;
+      opacity:.85;
+      font-size:12px;
+    }
+    .hmain{flex:1;min-width:0}
+    .htext{
+      font-size:13px;
+      font-weight:900;
+      color:#0b3d91;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .htime{
+      margin-top:4px;
+      font-size:11px;
+      color:var(--muted);
+      font-weight:800;
+    }
+
+    .empty{
+      padding:12px;
+      color:#94a3b8;
+      font-size:12px;
+      font-weight:800;
+    }
   </style>
 </head>
 <body>
@@ -165,7 +209,10 @@
           <div class="htitle">Lịch sử</div>
           <button class="danger mini" id="clearHistory" type="button">Xoá</button>
         </div>
-        <div class="hlist" id="hlist"></div>
+
+        <div class="hscroll">
+          <div class="hlist" id="hlist"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -204,8 +251,9 @@
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_ios_pwa_img_v2";
-    const HISTORY_MAX = 20;
+    // Lưu lịch sử dạng object: { value: "...", ts: 1700000000000 }
+    const HISTORY_KEY = "qr_tool_history_list_ts_v1";
+    const HISTORY_MAX = 50;
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -217,28 +265,52 @@
       }[m]));
     }
 
+    function fmtTime(ts){
+      // hiển thị: dd/mm HH:MM
+      const d = new Date(ts);
+      const dd = String(d.getDate()).padStart(2,"0");
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      return `${dd}/${mm} ${hh}:${mi}`;
+    }
+
     function loadHistory(){
       try{
         const raw = localStorage.getItem(HISTORY_KEY);
         const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch{ return []; }
+        if (!Array.isArray(arr)) return [];
+        // migrate old string[] (nếu có)
+        if (arr.length && typeof arr[0] === "string"){
+          return arr.map(v => ({ value: String(v), ts: Date.now() }));
+        }
+        return arr
+          .filter(x => x && typeof x.value === "string" && typeof x.ts === "number")
+          .slice(0, HISTORY_MAX);
+      }catch{
+        return [];
+      }
     }
+
     function saveHistory(arr){
       localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
     }
 
     let history = loadHistory();
-    let currentDataUrl = ""; // để fallback tải ảnh khi iOS không hiện menu
+    let currentDataUrl = "";
 
     function renderHistory(){
       if (!history.length){
         hlist.innerHTML = `<div class="empty">Trống</div>`;
         return;
       }
-      hlist.innerHTML = history.map((v, idx) => `
-        <div class="chip" data-idx="${idx}">
-          <i>${idx+1}</i><span>${escapeHtml(v)}</span>
+      hlist.innerHTML = history.map((it, idx) => `
+        <div class="hitem" data-idx="${idx}">
+          <div class="hleft">${idx+1}</div>
+          <div class="hmain">
+            <div class="htext">${escapeHtml(it.value)}</div>
+            <div class="htime">${fmtTime(it.ts)}</div>
+          </div>
         </div>
       `).join("");
     }
@@ -246,7 +318,12 @@
     function pushHistory(value){
       const v = norm(value);
       if (!v) return;
-      history = [v, ...history.filter(x => x !== v)].slice(0, HISTORY_MAX);
+
+      // đưa item trùng lên đầu và cập nhật thời gian
+      const now = Date.now();
+      const filtered = history.filter(it => it.value !== v);
+      history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
+
       saveHistory(history);
       renderHistory();
     }
@@ -258,7 +335,6 @@
 
     function fallbackDownloadPNG(){
       if (!currentDataUrl) return;
-      // tải PNG cực gọn
       const a = document.createElement("a");
       a.href = currentDataUrl;
       a.download = "qr.png";
@@ -271,25 +347,14 @@
 
     function attachLongPress(img){
       let timer = null;
-
-      // Long-press (touch)
       img.addEventListener("touchstart", () => {
-        timer = setTimeout(() => {
-          // Nếu iOS không hiện menu lưu ảnh trong PWA thì fallback tải PNG
-          fallbackDownloadPNG();
-        }, LONGPRESS_MS);
+        timer = setTimeout(() => fallbackDownloadPNG(), LONGPRESS_MS);
       }, { passive:true });
 
       ["touchend","touchcancel","touchmove"].forEach(ev => {
         img.addEventListener(ev, () => {
           if (timer) { clearTimeout(timer); timer = null; }
         }, { passive:true });
-      });
-
-      // Context menu (Safari long-press) -> nếu bạn muốn luôn tải thay vì menu
-      // Ở đây chỉ fallback nhẹ: nếu menu không hiện thì long-press touchstart đã xử lý.
-      img.addEventListener("contextmenu", () => {
-        // không preventDefault để Safari vẫn có thể hiện “Lưu ảnh” khi nó hỗ trợ
       });
     }
 
@@ -318,8 +383,8 @@
         img.alt = "QR";
         img.style.width = DISPLAY_SIZE + "px";
         img.style.height = DISPLAY_SIZE + "px";
-
         qr.appendChild(img);
+
         attachLongPress(img);
 
         setMsg("");
@@ -362,14 +427,15 @@
       }
     });
 
+    // Click item lịch sử -> dùng lại
     hlist.addEventListener("click", (e) => {
-      const chip = e.target.closest(".chip");
-      if (!chip) return;
-      const idx = Number(chip.getAttribute("data-idx"));
-      const v = history[idx];
-      if (!v) return;
-      t.value = v;
-      draw(v, false);
+      const item = e.target.closest(".hitem");
+      if (!item) return;
+      const idx = Number(item.getAttribute("data-idx"));
+      const it = history[idx];
+      if (!it) return;
+      t.value = it.value;
+      draw(it.value, false);
     });
 
     document.getElementById("clearHistory").addEventListener("click", () => {

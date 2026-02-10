@@ -24,10 +24,7 @@
       --blue:#2f6bff;
       --blue2:#1d4ed8;
 
-      --danger:#b42318;
-      --dangerBg: rgba(255, 77, 79, .12);
-      --dangerLine: rgba(255, 77, 79, .30);
-
+      --danger:#ff3b30; /* iOS red */
       --radius:22px;
       --shadow: 0 18px 45px rgba(2,6,23,.10);
       --shadow2: 0 10px 24px rgba(2,6,23,.08);
@@ -53,7 +50,7 @@
       background:
         radial-gradient(900px 520px at 10% -10%, rgba(47,107,255,.22) 0%, transparent 65%),
         radial-gradient(900px 520px at 92% 0%, rgba(0,208,255,.16) 0%, transparent 70%),
-        radial-gradient(900px 520px at 50% 110%, rgba(255, 77, 79, .10) 0%, transparent 60%),
+        radial-gradient(900px 520px at 50% 110%, rgba(255, 59, 48, .10) 0%, transparent 60%),
         var(--bg);
     }
 
@@ -77,10 +74,7 @@
       gap:12px;
     }
 
-    .brand{
-      display:flex; gap:10px; align-items:center;
-      min-width:0;
-    }
+    .brand{display:flex; gap:10px; align-items:center; min-width:0;}
     .logo{
       width:38px;height:38px;border-radius:12px;
       background: linear-gradient(135deg, rgba(47,107,255,.18), rgba(0,208,255,.14));
@@ -91,45 +85,19 @@
     }
     .logo svg{width:22px;height:22px;opacity:.9}
     .titles{min-width:0}
-    .title{
-      margin:0;
-      font-size:16px;
-      font-weight:1000;
-      letter-spacing:.2px;
-      line-height:1.15;
-    }
-    .sub{
-      margin:2px 0 0;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:700;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
+    .title{margin:0;font-size:16px;font-weight:1000;letter-spacing:.2px;line-height:1.15;}
+    .sub{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
     .status{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
       background: rgba(255,255,255,.75);
       border:1px solid var(--line);
       box-shadow: 0 8px 18px rgba(2,6,23,.06);
-      user-select:none;
-      flex:0 0 auto;
+      user-select:none;flex:0 0 auto;
     }
-    .dot{
-      width:8px;height:8px;border-radius:999px;
-      background:#10b981;
-      box-shadow: 0 0 0 4px rgba(16,185,129,.18);
-    }
-    .status span{
-      font-size:12px;
-      font-weight:1000;
-      color:#0f172a;
-    }
+    .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8;box-shadow: 0 0 0 4px rgba(148,163,184,.18);}
+    .status span{font-size:12px;font-weight:1000;color:#0f172a;}
 
     .content{padding:0 14px 14px}
 
@@ -143,41 +111,27 @@
     .panelInner{padding:12px}
 
     .labelRow{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:8px;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-bottom:8px;color:var(--muted);font-size:12px;font-weight:800;
     }
     .lenPill{
-      padding:6px 10px;
-      border-radius:999px;
+      padding:6px 10px;border-radius:999px;
       background: rgba(47,107,255,.10);
       border:1px solid rgba(47,107,255,.18);
-      color:#1d4ed8;
-      font-weight:1000;
-      font-size:12px;
-      user-select:none;
+      color:#1d4ed8;font-weight:1000;font-size:12px;user-select:none;
     }
 
     textarea{
       width:100%;
       min-height:96px;
       padding:12px 12px 14px;
-      font-size:16px;
-      line-height:1.35;
+      font-size:16px;line-height:1.35;
       border-radius:16px;
       border:1px solid rgba(15, 23, 42, .10);
-      outline:none;
-      resize:vertical;
+      outline:none;resize:vertical;
       background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.75));
       box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
-      overflow-x:hidden;
-      white-space:pre-wrap;
-      word-break:break-word;
+      overflow-x:hidden;white-space:pre-wrap;word-break:break-word;
       touch-action:pan-y;
     }
     textarea:focus{
@@ -193,27 +147,17 @@
     }
 
     button{
-      appearance:none;
-      border:none;
-      border-radius:16px;
-      padding:12px 12px;
-      font-size:14px;
-      font-weight:1000;
-      cursor:pointer;
-      transition:.12s;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      user-select:none;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
+      appearance:none;border:none;border-radius:16px;
+      padding:12px 12px;font-size:14px;font-weight:1000;
+      cursor:pointer;transition:.12s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
       box-shadow: 0 10px 22px rgba(2,6,23,.07);
     }
     button:active{transform:translateY(1px)}
     .btnPrimary{color:#fff;background: linear-gradient(135deg, var(--blue), var(--blue2));}
     .btnSoft{color:#0b3d91;background: rgba(47,107,255,.10);border:1px solid rgba(47,107,255,.18);box-shadow:none;}
-    .btnDanger{color: var(--danger);background: var(--dangerBg);border:1px solid var(--dangerLine);box-shadow:none;}
+    .btnDanger{color:#b42318;background: rgba(255, 77, 79, .12);border:1px solid rgba(255, 77, 79, .30);box-shadow:none;}
 
     .grid{
       margin-top:12px;
@@ -233,51 +177,30 @@
     }
     .qrHead{
       padding:10px 12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
       border-bottom:1px solid var(--line);
       background: linear-gradient(180deg, rgba(47,107,255,.08), rgba(255,255,255,0));
     }
     .qrHead .h{
-      font-size:12px;
-      font-weight:1000;
-      color:#0f172a;
-      letter-spacing:.4px;
-      text-transform:uppercase;
+      font-size:12px;font-weight:1000;color:#0f172a;
+      letter-spacing:.4px;text-transform:uppercase;
     }
-    .hint{
-      font-size:11px;
-      color:var(--muted);
-      font-weight:800;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
+    .hint{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
     .qrbox{
       padding:14px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:320px;
-      position:relative;
+      display:flex;align-items:center;justify-content:center;
+      min-height:320px;position:relative;
     }
     .qrbox::after{
-      content:"";
-      position:absolute;
-      inset:-60px;
+      content:"";position:absolute;inset:-60px;
       background: radial-gradient(520px 260px at 50% 10%, rgba(47,107,255,.16), transparent 60%);
       pointer-events:none;
     }
 
     #qrImg{
-      display:block;
-      width:300px;height:300px;max-width:100%;
-      position:relative;z-index:1;
-      border-radius:18px;
-      background:#fff;
+      display:block;width:300px;height:300px;max-width:100%;
+      position:relative;z-index:1;border-radius:18px;background:#fff;
       border: 1px solid rgba(15, 23, 42, .08);
       box-shadow: 0 16px 34px rgba(2,6,23,.10);
       image-rendering: pixelated;
@@ -285,19 +208,14 @@
       user-select:none;
     }
     #qrText{
-      position:relative;z-index:1;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:1000;
-      letter-spacing:.5px;
-      text-transform:uppercase;
-      user-select:none;
-      padding:10px 12px;
-      border-radius:999px;
+      position:relative;z-index:1;color:var(--muted);
+      font-size:12px;font-weight:1000;letter-spacing:.5px;text-transform:uppercase;
+      user-select:none;padding:10px 12px;border-radius:999px;
       background: rgba(255,255,255,.75);
       border: 1px solid var(--line);
     }
 
+    /* ===== HISTORY (iOS-like) ===== */
     .history{
       margin-top:12px;
       background: rgba(255,255,255,.82);
@@ -306,131 +224,125 @@
       box-shadow: 0 12px 30px rgba(2,6,23,.06);
       overflow:hidden;
     }
-
     .hTop{
       padding:10px 12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
       border-bottom:1px solid var(--line);
       background: linear-gradient(180deg, rgba(0,208,255,.10), rgba(255,255,255,0));
     }
-
     .hTop .h{
-      font-size:12px;
-      font-weight:1000;
-      color:#0f172a;
-      letter-spacing:.4px;
-      text-transform:uppercase;
+      font-size:12px;font-weight:1000;color:#0f172a;
+      letter-spacing:.4px;text-transform:uppercase;
     }
 
     .hlist{
-      max-height:260px;
+      max-height:280px;
       overflow:auto;
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
-      background: rgba(255,255,255,.35);
+      background: rgba(255,255,255,.60);
+      padding: 8px 8px 10px;
     }
 
-    /* ===== SWIPE ROW ===== */
+    /* Row container */
     .row{
       position:relative;
       overflow:hidden;
-      border-top:1px solid var(--line);
-      background: rgba(255,255,255,.35);
+      border-radius: 16px;
+      margin-bottom: 8px;
+      background: transparent;
     }
-    .row:first-child{border-top:none}
+    .row:last-child{margin-bottom:0}
 
+    /* Actions area behind */
     .rowActions{
       position:absolute;
-      inset:0 0 0 auto;
-      width:92px;
+      inset:0;
       display:flex;
-      align-items:stretch;
+      align-items:center;
       justify-content:flex-end;
-      pointer-events:none; /* chỉ bật khi open */
-    }
-
-    .rowActions button{
-      width:92px;
-      border-radius:0;
-      box-shadow:none;
-      font-size:13px;
-      font-weight:1000;
-      padding:0;
-      margin:0;
-      background: rgba(255, 77, 79, .90);
-      color:#fff;
-      border-left:1px solid rgba(255,255,255,.35);
+      padding-right: 10px;
+      background: transparent;
+      pointer-events:none;
     }
     .row.open .rowActions{pointer-events:auto}
 
+    .delBtn{
+      width:46px;height:46px;
+      border-radius:999px;
+      border:none;
+      background: var(--danger);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 10px 18px rgba(255,59,48,.22);
+      padding:0;margin:0;
+    }
+    .delBtn:active{transform:translateY(1px)}
+    .delBtn svg{width:22px;height:22px;fill:#fff}
+
+    /* Foreground row (slides) */
     .rowMain{
       position:relative;
       display:flex;
       gap:10px;
-      padding:12px 12px;
-      align-items:flex-start;
+      padding: 12px 12px;
+      align-items:center;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.06);
+      border-radius: 16px;
+
       transform: translateX(0px);
       transition: transform .18s ease;
       will-change: transform;
-      touch-action: pan-y; /* cho cuộn dọc bình thường */
+
+      touch-action: pan-y; /* allow vertical scroll */
       user-select:none;
       -webkit-tap-highlight-color:transparent;
-      background: rgba(255,255,255,.35);
     }
 
+    /* When opened, looks like iOS selected grey */
     .row.open .rowMain{
-      transform: translateX(-92px);
+      transform: translateX(-74px); /* reveal delete circle */
+      background: #eef0f4;
+      border-color: rgba(15,23,42,.05);
     }
 
-    .hleft{
-      min-width:38px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding-top:2px;
-      color:#1d4ed8;
-      font-weight:1000;
-      opacity:.9;
-      font-size:12px;
+    .avatar{
+      width:40px;height:40px;border-radius:999px;
+      background: linear-gradient(135deg, rgba(47,107,255,.16), rgba(0,208,255,.14));
+      border: 1px solid rgba(47,107,255,.14);
+      display:flex;align-items:center;justify-content:center;
+      color:#1d4ed8;font-weight:1000;
+      flex:0 0 auto;
     }
+
     .hmain{flex:1;min-width:0}
     .htext{
-      font-size:13px;
+      font-size:14px;
       font-weight:1000;
-      color:#0b3d91;
-      line-height:1.2;
+      color:#0f172a;
+      line-height:1.15;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
     .htime{
       margin-top:4px;
-      font-size:11px;
+      font-size:12px;
       color:var(--muted);
-      font-weight:900;
+      font-weight:800;
     }
 
     .empty{
       padding:12px;
-      color: #94a3b8;
+      color:#94a3b8;
       font-size:12px;
       font-weight:1000;
     }
 
     .foot{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-      padding: 0 2px;
-      min-height:18px;
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-top:10px;color:var(--muted);font-size:12px;font-weight:800;
+      padding: 0 2px;min-height:18px;
     }
     #msg{min-height:18px}
   </style>
@@ -498,7 +410,8 @@
             <div class="history" id="historyBox">
               <div class="hTop">
                 <div class="h">Lịch sử</div>
-                <button class="btnDanger" id="clearHistory" type="button" style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
+                <button class="btnDanger" id="clearHistory" type="button"
+                        style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
                   Xoá tất cả
                 </button>
               </div>
@@ -548,11 +461,11 @@
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_swipe_v1";
+    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v1";
     const HISTORY_MAX = 80;
 
-    const SWIPE_OPEN_PX = 56;   // vuốt >= ngưỡng -> mở
-    const SWIPE_ACTION_W = 92;  // độ rộng nút xoá
+    const OPEN_REVEAL_PX = 52;  // ngưỡng để mở
+    const REVEAL_X = 74;        // px reveal (phù hợp nút tròn)
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -617,7 +530,7 @@
 
     let history = loadHistory();
     let currentDataUrl = "";
-    let openRowEl = null; // chỉ mở 1 row
+    let openRowEl = null;
 
     function closeOpenRow(){
       if (openRowEl){
@@ -631,14 +544,19 @@
         hlist.innerHTML = `<div class="empty">Trống</div>`;
         return;
       }
+
       hlist.innerHTML = history.map((it, idx) => `
         <div class="row" data-idx="${idx}">
           <div class="rowActions">
-            <button type="button" data-action="delete" data-idx="${idx}">Xoá</button>
+            <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
+              </svg>
+            </button>
           </div>
 
           <div class="rowMain" data-action="open" data-idx="${idx}">
-            <div class="hleft">${idx+1}</div>
+            <div class="avatar">${String(idx+1)}</div>
             <div class="hmain">
               <div class="htext">${escapeHtml(it.value)}</div>
               <div class="htime">${fmtTime(it.ts)}</div>
@@ -663,9 +581,9 @@
       history.splice(idx, 1);
       saveHistory(history);
       renderHistory();
+      closeOpenRow();
       setMsg("Đã xoá 1 mục");
       setTimeout(()=>setMsg(""), 700);
-      closeOpenRow();
     }
 
     function showEmptyQR(){
@@ -739,75 +657,90 @@
       }
     }
 
-    // ===== Swipe handler (only for history rows) =====
+    // ===== Swipe: giống iOS (vuốt trái mới lộ nút xoá) =====
     function bindSwipe(){
-      let startX = 0, startY = 0;
-      let dragging = false;
-      let row = null;
+      let startX=0, startY=0;
+      let dragging=false;
+      let row=null;
+
+      function getX(el){
+        const main = el.querySelector(".rowMain");
+        const m = /translateX\(([-0-9.]+)px\)/.exec(main.style.transform || "");
+        return m ? parseFloat(m[1]) : (el.classList.contains("open") ? -REVEAL_X : 0);
+      }
+
+      function setX(el, x, noAnim=false){
+        const main = el.querySelector(".rowMain");
+        main.style.transition = noAnim ? "none" : "";
+        main.style.transform = `translateX(${x}px)`;
+      }
+
+      function resetInline(el){
+        const main = el.querySelector(".rowMain");
+        main.style.transition = "";
+        main.style.transform = "";
+      }
 
       function onStart(e){
-        const target = e.target.closest(".rowMain");
-        if (!target) return;
+        const main = e.target.closest(".rowMain");
+        if (!main) return;
 
-        row = target.closest(".row");
+        row = main.closest(".row");
         if (!row) return;
 
-        // nếu chạm row khác khi đang open -> đóng row cũ
+        // nếu đang mở row khác -> đóng
         if (openRowEl && openRowEl !== row) closeOpenRow();
 
-        const touch = e.touches ? e.touches[0] : e;
+        const touch = e.touches[0];
         startX = touch.clientX;
         startY = touch.clientY;
         dragging = false;
+
+        // nếu row đã mở thì bắt đầu từ vị trí -REVEAL_X
+        if (row.classList.contains("open")){
+          setX(row, -REVEAL_X, true);
+        } else {
+          setX(row, 0, true);
+        }
       }
 
       function onMove(e){
         if (!row) return;
-        const touch = e.touches ? e.touches[0] : e;
+        const touch = e.touches[0];
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
 
-        // chỉ bắt swipe ngang khi dx đủ lớn hơn dy
         if (!dragging){
+          // chỉ bắt swipe ngang khi dx đủ lớn hơn dy
           if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2){
             dragging = true;
-            // khi bắt swipe ngang, chặn scroll dọc
             e.preventDefault();
           } else {
             return;
           }
         }
 
-        // dragging = true
         e.preventDefault();
 
-        if (dx < 0){
-          // vuốt trái: tạm thời translate theo dx, giới hạn -SWIPE_ACTION_W
-          const x = Math.max(dx, -SWIPE_ACTION_W);
-          row.querySelector(".rowMain").style.transition = "none";
-          row.querySelector(".rowMain").style.transform = `translateX(${x}px)`;
-        } else {
-          // vuốt phải: kéo về 0
-          const x = Math.min(dx - SWIPE_ACTION_W, 0); // nếu đang mở, bắt đầu từ -W
-          row.querySelector(".rowMain").style.transition = "none";
-          row.querySelector(".rowMain").style.transform = `translateX(${x}px)`;
-        }
+        const opened = row.classList.contains("open");
+        const base = opened ? -REVEAL_X : 0;
+        let x = base + dx;
+
+        // giới hạn: từ 0 đến -REVEAL_X
+        if (x > 0) x = 0;
+        if (x < -REVEAL_X) x = -REVEAL_X;
+
+        setX(row, x, true);
       }
 
       function onEnd(){
         if (!row) return;
 
-        const main = row.querySelector(".rowMain");
-        // lấy transform hiện tại
-        const m = /translateX\(([-0-9.]+)px\)/.exec(main.style.transform || "");
-        const curX = m ? parseFloat(m[1]) : (row.classList.contains("open") ? -SWIPE_ACTION_W : 0);
-
-        main.style.transition = "";
-        main.style.transform = "";
+        const x = getX(row);
+        resetInline(row);
 
         if (dragging){
-          // quyết định open/close
-          if (curX <= -SWIPE_OPEN_PX){
+          if (x <= -OPEN_REVEAL_PX){
             row.classList.add("open");
             openRowEl = row;
           } else {
@@ -820,53 +753,51 @@
         row = null;
       }
 
-      // touch events (passive false needed for preventDefault)
       hlist.addEventListener("touchstart", onStart, { passive:true });
       hlist.addEventListener("touchmove", onMove, { passive:false });
       hlist.addEventListener("touchend", onEnd, { passive:true });
       hlist.addEventListener("touchcancel", onEnd, { passive:true });
     }
 
-    // click handling
+    // Click: delete / open
     hlist.addEventListener("click", (e) => {
-      const btn = e.target.closest('[data-action="delete"]');
-      if (btn){
-        e.preventDefault();
-        e.stopPropagation();
-        const idx = Number(btn.getAttribute("data-idx"));
-        deleteOne(idx);
+      const del = e.target.closest('[data-action="delete"]');
+      if (del){
+        e.preventDefault(); e.stopPropagation();
+        deleteOne(Number(del.getAttribute("data-idx")));
         return;
       }
 
       const main = e.target.closest('[data-action="open"]');
-      if (main){
-        // nếu row đang mở thì click vào main chỉ đóng (không nạp)
-        const row = main.closest(".row");
-        if (row && row.classList.contains("open")){
-          closeOpenRow();
-          return;
-        }
+      if (!main) return;
 
-        const idx = Number(main.getAttribute("data-idx"));
-        const it = history[idx];
-        if (!it) return;
-        t.value = it.value;
-        draw(it.value, false);
+      const row = main.closest(".row");
+
+      // nếu đang mở thì click để đóng (giống iOS)
+      if (row && row.classList.contains("open")){
+        closeOpenRow();
+        return;
       }
+
+      const idx = Number(main.getAttribute("data-idx"));
+      const it = history[idx];
+      if (!it) return;
+      t.value = it.value;
+      draw(it.value, false);
     });
 
-    // tap ra ngoài history để đóng row open
+    // Tap ra ngoài history để đóng row đang mở
     document.addEventListener("click", (e) => {
       if (!openRowEl) return;
-      const inHistory = e.target.closest("#historyBox");
-      if (!inHistory) closeOpenRow();
+      if (!e.target.closest("#historyBox")) closeOpenRow();
     });
 
-    // action buttons
-    document.getElementById('gen').addEventListener('click', () => draw(t.value, true));
-    document.getElementById('clr').addEventListener('click', () => { t.value = ""; draw("", false); setMsg(""); closeOpenRow(); });
+    // Buttons
+    document.getElementById('gen').addEventListener('click', () => { closeOpenRow(); draw(t.value, true); });
+    document.getElementById('clr').addEventListener('click', () => { closeOpenRow(); t.value = ""; draw("", false); setMsg(""); });
     document.getElementById('paste').addEventListener('click', async () => {
       try{
+        closeOpenRow();
         setStatus("working");
         if(!navigator.clipboard?.readText){
           setMsg("No clipboard");
@@ -876,7 +807,6 @@
         const text = await navigator.clipboard.readText();
         t.value = text || "";
         draw(t.value, true);
-        closeOpenRow();
       }catch(e){
         console.error(e);
         setMsg("Clipboard error");
@@ -888,9 +818,9 @@
       history = [];
       saveHistory(history);
       renderHistory();
+      closeOpenRow();
       setMsg("Đã xoá tất cả");
       setTimeout(()=>setMsg(""), 700);
-      closeOpenRow();
       setStatus("ready");
     });
 

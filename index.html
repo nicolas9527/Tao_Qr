@@ -300,14 +300,13 @@
       border-color: rgba(15,23,42,.05);
     }
 
-    /* ✅ Hiển thị mục đang chọn */
+    /* ✅ Highlight mục đang chọn (không có dấu ✓) */
     .row.selected .rowMain{
-      border-color: rgba(47,107,255,.38);
+      border-color: rgba(47,107,255,.42);
       box-shadow: 0 0 0 3px rgba(47,107,255,.10);
-      background: rgba(255,255,255,.95);
+      background: rgba(255,255,255,.96);
     }
     .row.open.selected .rowMain{
-      /* khi vừa open vừa selected vẫn giữ highlight nhẹ */
       box-shadow: 0 0 0 3px rgba(47,107,255,.10);
     }
 
@@ -337,24 +336,6 @@
       color:var(--muted);
       font-weight:800;
     }
-
-    .selMark{
-      width:26px;height:26px;
-      border-radius:999px;
-      background: rgba(47,107,255,.12);
-      border: 1px solid rgba(47,107,255,.20);
-      display:flex;align-items:center;justify-content:center;
-      margin-left:6px;
-      opacity:0;
-      transform: scale(.95);
-      transition: .12s ease;
-      flex: 0 0 auto;
-    }
-    .row.selected .selMark{
-      opacity:1;
-      transform: scale(1);
-    }
-    .selMark svg{width:16px;height:16px;fill:#1d4ed8}
 
     .empty{
       padding:12px;
@@ -484,11 +465,11 @@
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v2_selected";
+    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v2_nocheck";
     const HISTORY_MAX = 80;
 
-    const OPEN_REVEAL_PX = 52;  // ngưỡng để mở
-    const REVEAL_X = 74;        // px reveal
+    const OPEN_REVEAL_PX = 52;
+    const REVEAL_X = 74;
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -555,7 +536,7 @@
     let currentDataUrl = "";
     let openRowEl = null;
 
-    // ✅ lưu “đang chọn” theo VALUE (để reorder vẫn đúng)
+    // lưu “đang chọn” theo value
     let selectedValue = null;
 
     function closeOpenRow(){
@@ -589,12 +570,6 @@
                 <div class="htext">${escapeHtml(it.value)}</div>
                 <div class="htime">${fmtTime(it.ts)}</div>
               </div>
-
-              <div class="selMark" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4Z"/>
-                </svg>
-              </div>
             </div>
           </div>
         `;
@@ -606,7 +581,7 @@
       if (!v) return;
       const now = Date.now();
 
-      // ✅ mục mới được chọn luôn
+      // mục mới được chọn luôn
       selectedValue = v;
 
       const filtered = history.filter(it => it.value !== v);
@@ -618,7 +593,6 @@
     function deleteOne(idx){
       if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
 
-      // nếu xoá đúng mục đang chọn thì bỏ chọn
       if (selectedValue && history[idx].value === selectedValue) selectedValue = null;
 
       history.splice(idx, 1);
@@ -692,10 +666,6 @@
         setStatus("ok");
 
         if (shouldSave) pushHistory(v);
-        else {
-          // nếu đang hiển thị từ lịch sử thì selectedValue đã set khi bấm item
-          // không làm gì
-        }
       }catch(e){
         console.error(e);
         showEmptyQR();
@@ -704,7 +674,7 @@
       }
     }
 
-    // ===== Swipe: vuốt trái mới lộ nút xoá =====
+    // Swipe: vuốt trái mới lộ nút xoá
     function bindSwipe(){
       let startX=0, startY=0;
       let dragging=false;
@@ -816,7 +786,6 @@
 
       const row = main.closest(".row");
 
-      // nếu đang open thì click để đóng
       if (row && row.classList.contains("open")){
         closeOpenRow();
         return;
@@ -826,7 +795,6 @@
       const it = history[idx];
       if (!it) return;
 
-      // ✅ set đang chọn + highlight
       selectedValue = it.value;
       renderHistory();
 
@@ -849,7 +817,7 @@
     document.getElementById('clr').addEventListener('click', () => {
       closeOpenRow();
       t.value = "";
-      selectedValue = null;     // ✅ xoá input thì bỏ chọn luôn
+      selectedValue = null;
       renderHistory();
       draw("", false);
       setMsg("");
@@ -874,7 +842,7 @@
       }
     });
 
-    // ✅ Xoá tất cả: thêm xác nhận để tránh bấm nhầm
+    // Xoá tất cả: có xác nhận
     document.getElementById("clearHistory").addEventListener("click", () => {
       closeOpenRow();
 
@@ -888,7 +856,7 @@
       if (!ok) return;
 
       history = [];
-      selectedValue = null;  // ✅ bỏ chọn
+      selectedValue = null;
       saveHistory(history);
       renderHistory();
 

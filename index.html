@@ -23,7 +23,7 @@
       --blue:#2f6bff;
       --blue2:#1d4ed8;
 
-      --danger:#ff3b30; /* iOS red */
+      --danger:#ff3b30;
       --radius:22px;
       --shadow: 0 18px 45px rgba(2,6,23,.10);
       --shadow2: 0 10px 24px rgba(2,6,23,.08);
@@ -214,7 +214,7 @@
       border: 1px solid var(--line);
     }
 
-    /* ===== HISTORY (iOS-like) ===== */
+    /* ===== HISTORY ===== */
     .history{
       margin-top:12px;
       background: rgba(255,255,255,.82);
@@ -252,6 +252,7 @@
     }
     .row:last-child{margin-bottom:0}
 
+    /* ✅ Ẩn actions hoàn toàn, chỉ khi open mới hiện */
     .rowActions{
       position:absolute;
       inset:0;
@@ -259,9 +260,18 @@
       align-items:center;
       justify-content:flex-end;
       padding-right: 10px;
-      pointer-events:none;
+
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+
+      transition: opacity .15s ease, visibility .15s ease;
     }
-    .row.open .rowActions{pointer-events:auto}
+    .row.open .rowActions{
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
 
     .delBtn{
       width:46px;height:46px;
@@ -300,7 +310,6 @@
       border-color: rgba(15,23,42,.05);
     }
 
-    /* ✅ Highlight mục đang chọn (không có dấu ✓) */
     .row.selected .rowMain{
       border-color: rgba(47,107,255,.42);
       box-shadow: 0 0 0 3px rgba(47,107,255,.10);
@@ -458,14 +467,13 @@
 
     const pill = document.getElementById('pill');
     const dot = document.getElementById('dot');
-
     const hlist = document.getElementById('hlist');
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v2_nocheck";
+    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v3_hideactions";
     const HISTORY_MAX = 80;
 
     const OPEN_REVEAL_PX = 52;
@@ -535,8 +543,6 @@
     let history = loadHistory();
     let currentDataUrl = "";
     let openRowEl = null;
-
-    // lưu “đang chọn” theo value
     let selectedValue = null;
 
     function closeOpenRow(){
@@ -581,7 +587,6 @@
       if (!v) return;
       const now = Date.now();
 
-      // mục mới được chọn luôn
       selectedValue = v;
 
       const filtered = history.filter(it => it.value !== v);
@@ -592,7 +597,6 @@
 
     function deleteOne(idx){
       if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
-
       if (selectedValue && history[idx].value === selectedValue) selectedValue = null;
 
       history.splice(idx, 1);
@@ -674,7 +678,7 @@
       }
     }
 
-    // Swipe: vuốt trái mới lộ nút xoá
+    // Swipe: vuốt trái mới lộ nút xoá (và chỉ hiện khi OPEN)
     function bindSwipe(){
       let startX=0, startY=0;
       let dragging=false;

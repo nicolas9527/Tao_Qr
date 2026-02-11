@@ -244,7 +244,6 @@
       padding: 8px 8px 10px;
     }
 
-    /* Row container */
     .row{
       position:relative;
       overflow:hidden;
@@ -254,7 +253,6 @@
     }
     .row:last-child{margin-bottom:0}
 
-    /* Actions area behind */
     .rowActions{
       position:absolute;
       inset:0;
@@ -262,7 +260,6 @@
       align-items:center;
       justify-content:flex-end;
       padding-right: 10px;
-      background: transparent;
       pointer-events:none;
     }
     .row.open .rowActions{pointer-events:auto}
@@ -279,7 +276,6 @@
     .delBtn:active{transform:translateY(1px)}
     .delBtn svg{width:22px;height:22px;fill:#fff}
 
-    /* Foreground row (slides) */
     .rowMain{
       position:relative;
       display:flex;
@@ -294,14 +290,13 @@
       transition: transform .18s ease;
       will-change: transform;
 
-      touch-action: pan-y; /* allow vertical scroll */
+      touch-action: pan-y;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
 
-    /* When opened, looks like iOS selected grey */
     .row.open .rowMain{
-      transform: translateX(-74px); /* reveal delete circle */
+      transform: translateX(-74px);
       background: #eef0f4;
       border-color: rgba(15,23,42,.05);
     }
@@ -313,6 +308,7 @@
       display:flex;align-items:center;justify-content:center;
       color:#1d4ed8;font-weight:1000;
       flex:0 0 auto;
+      font-size:12px;
     }
 
     .hmain{flex:1;min-width:0}
@@ -364,7 +360,7 @@
           </div>
         </div>
 
-        <div class="status">
+        <div class="status" id="status">
           <span class="dot" id="dot"></span>
           <span id="pill">Ready</span>
         </div>
@@ -657,7 +653,7 @@
       }
     }
 
-    // ===== Swipe: giống iOS (vuốt trái mới lộ nút xoá) =====
+    // ===== Swipe: vuốt trái mới lộ nút xoá =====
     function bindSwipe(){
       let startX=0, startY=0;
       let dragging=false;
@@ -688,7 +684,6 @@
         row = main.closest(".row");
         if (!row) return;
 
-        // nếu đang mở row khác -> đóng
         if (openRowEl && openRowEl !== row) closeOpenRow();
 
         const touch = e.touches[0];
@@ -696,7 +691,6 @@
         startY = touch.clientY;
         dragging = false;
 
-        // nếu row đã mở thì bắt đầu từ vị trí -REVEAL_X
         if (row.classList.contains("open")){
           setX(row, -REVEAL_X, true);
         } else {
@@ -711,7 +705,6 @@
         const dy = touch.clientY - startY;
 
         if (!dragging){
-          // chỉ bắt swipe ngang khi dx đủ lớn hơn dy
           if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2){
             dragging = true;
             e.preventDefault();
@@ -726,7 +719,6 @@
         const base = opened ? -REVEAL_X : 0;
         let x = base + dx;
 
-        // giới hạn: từ 0 đến -REVEAL_X
         if (x > 0) x = 0;
         if (x < -REVEAL_X) x = -REVEAL_X;
 
@@ -773,7 +765,6 @@
 
       const row = main.closest(".row");
 
-      // nếu đang mở thì click để đóng (giống iOS)
       if (row && row.classList.contains("open")){
         closeOpenRow();
         return;
@@ -795,6 +786,7 @@
     // Buttons
     document.getElementById('gen').addEventListener('click', () => { closeOpenRow(); draw(t.value, true); });
     document.getElementById('clr').addEventListener('click', () => { closeOpenRow(); t.value = ""; draw("", false); setMsg(""); });
+
     document.getElementById('paste').addEventListener('click', async () => {
       try{
         closeOpenRow();
@@ -814,11 +806,23 @@
       }
     });
 
+    // ✅ Xoá tất cả: thêm xác nhận để tránh bấm nhầm
     document.getElementById("clearHistory").addEventListener("click", () => {
+      closeOpenRow();
+
+      if (!history.length){
+        setMsg("Lịch sử trống");
+        setTimeout(()=>setMsg(""), 700);
+        return;
+      }
+
+      const ok = confirm("Xoá toàn bộ lịch sử?\nKhông thể hoàn tác.");
+      if (!ok) return;
+
       history = [];
       saveHistory(history);
       renderHistory();
-      closeOpenRow();
+
       setMsg("Đã xoá tất cả");
       setTimeout(()=>setMsg(""), 700);
       setStatus("ready");

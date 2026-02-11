@@ -16,7 +16,6 @@
   <style>
     :root{
       --bg:#f5f7ff;
-      --card:#ffffff;
       --text:#0b1220;
       --muted:#6b7280;
       --line: rgba(15, 23, 42, .08);
@@ -301,6 +300,17 @@
       border-color: rgba(15,23,42,.05);
     }
 
+    /* ✅ Hiển thị mục đang chọn */
+    .row.selected .rowMain{
+      border-color: rgba(47,107,255,.38);
+      box-shadow: 0 0 0 3px rgba(47,107,255,.10);
+      background: rgba(255,255,255,.95);
+    }
+    .row.open.selected .rowMain{
+      /* khi vừa open vừa selected vẫn giữ highlight nhẹ */
+      box-shadow: 0 0 0 3px rgba(47,107,255,.10);
+    }
+
     .avatar{
       width:40px;height:40px;border-radius:999px;
       background: linear-gradient(135deg, rgba(47,107,255,.16), rgba(0,208,255,.14));
@@ -327,6 +337,24 @@
       color:var(--muted);
       font-weight:800;
     }
+
+    .selMark{
+      width:26px;height:26px;
+      border-radius:999px;
+      background: rgba(47,107,255,.12);
+      border: 1px solid rgba(47,107,255,.20);
+      display:flex;align-items:center;justify-content:center;
+      margin-left:6px;
+      opacity:0;
+      transform: scale(.95);
+      transition: .12s ease;
+      flex: 0 0 auto;
+    }
+    .row.selected .selMark{
+      opacity:1;
+      transform: scale(1);
+    }
+    .selMark svg{width:16px;height:16px;fill:#1d4ed8}
 
     .empty{
       padding:12px;
@@ -451,17 +479,16 @@
     const dot = document.getElementById('dot');
 
     const hlist = document.getElementById('hlist');
-    const historyBox = document.getElementById('historyBox');
 
     const DISPLAY_SIZE = 300;
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v1";
+    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v2_selected";
     const HISTORY_MAX = 80;
 
     const OPEN_REVEAL_PX = 52;  // ngưỡng để mở
-    const REVEAL_X = 74;        // px reveal (phù hợp nút tròn)
+    const REVEAL_X = 74;        // px reveal
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -528,6 +555,9 @@
     let currentDataUrl = "";
     let openRowEl = null;
 
+    // ✅ lưu “đang chọn” theo VALUE (để reorder vẫn đúng)
+    let selectedValue = null;
+
     function closeOpenRow(){
       if (openRowEl){
         openRowEl.classList.remove("open");
@@ -541,31 +571,44 @@
         return;
       }
 
-      hlist.innerHTML = history.map((it, idx) => `
-        <div class="row" data-idx="${idx}">
-          <div class="rowActions">
-            <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
-              </svg>
-            </button>
-          </div>
+      hlist.innerHTML = history.map((it, idx) => {
+        const isSel = selectedValue && it.value === selectedValue;
+        return `
+          <div class="row ${isSel ? "selected" : ""}" data-idx="${idx}">
+            <div class="rowActions">
+              <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
+                <svg viewBox="0 0 24 24">
+                  <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
+                </svg>
+              </button>
+            </div>
 
-          <div class="rowMain" data-action="open" data-idx="${idx}">
-            <div class="avatar">${String(idx+1)}</div>
-            <div class="hmain">
-              <div class="htext">${escapeHtml(it.value)}</div>
-              <div class="htime">${fmtTime(it.ts)}</div>
+            <div class="rowMain" data-action="open" data-idx="${idx}">
+              <div class="avatar">${String(idx+1)}</div>
+              <div class="hmain">
+                <div class="htext">${escapeHtml(it.value)}</div>
+                <div class="htime">${fmtTime(it.ts)}</div>
+              </div>
+
+              <div class="selMark" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4Z"/>
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
     }
 
     function pushHistory(value){
       const v = norm(value);
       if (!v) return;
       const now = Date.now();
+
+      // ✅ mục mới được chọn luôn
+      selectedValue = v;
+
       const filtered = history.filter(it => it.value !== v);
       history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
       saveHistory(history);
@@ -574,6 +617,10 @@
 
     function deleteOne(idx){
       if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
+
+      // nếu xoá đúng mục đang chọn thì bỏ chọn
+      if (selectedValue && history[idx].value === selectedValue) selectedValue = null;
+
       history.splice(idx, 1);
       saveHistory(history);
       renderHistory();
@@ -645,6 +692,10 @@
         setStatus("ok");
 
         if (shouldSave) pushHistory(v);
+        else {
+          // nếu đang hiển thị từ lịch sử thì selectedValue đã set khi bấm item
+          // không làm gì
+        }
       }catch(e){
         console.error(e);
         showEmptyQR();
@@ -765,6 +816,7 @@
 
       const row = main.closest(".row");
 
+      // nếu đang open thì click để đóng
       if (row && row.classList.contains("open")){
         closeOpenRow();
         return;
@@ -773,6 +825,11 @@
       const idx = Number(main.getAttribute("data-idx"));
       const it = history[idx];
       if (!it) return;
+
+      // ✅ set đang chọn + highlight
+      selectedValue = it.value;
+      renderHistory();
+
       t.value = it.value;
       draw(it.value, false);
     });
@@ -784,8 +841,19 @@
     });
 
     // Buttons
-    document.getElementById('gen').addEventListener('click', () => { closeOpenRow(); draw(t.value, true); });
-    document.getElementById('clr').addEventListener('click', () => { closeOpenRow(); t.value = ""; draw("", false); setMsg(""); });
+    document.getElementById('gen').addEventListener('click', () => {
+      closeOpenRow();
+      draw(t.value, true);
+    });
+
+    document.getElementById('clr').addEventListener('click', () => {
+      closeOpenRow();
+      t.value = "";
+      selectedValue = null;     // ✅ xoá input thì bỏ chọn luôn
+      renderHistory();
+      draw("", false);
+      setMsg("");
+    });
 
     document.getElementById('paste').addEventListener('click', async () => {
       try{
@@ -820,6 +888,7 @@
       if (!ok) return;
 
       history = [];
+      selectedValue = null;  // ✅ bỏ chọn
       saveHistory(history);
       renderHistory();
 

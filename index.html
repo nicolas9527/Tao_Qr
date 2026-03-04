@@ -23,7 +23,7 @@
       --blue:#2f6bff;
       --blue2:#1d4ed8;
 
-      --danger:#ff3b30;
+      --danger:#ff3b30; /* iOS red */
       --radius:22px;
       --shadow: 0 18px 45px rgba(2,6,23,.10);
       --shadow2: 0 10px 24px rgba(2,6,23,.08);
@@ -32,7 +32,7 @@
     *{box-sizing:border-box}
     html, body{
       width:100%;
-      overflow-x:hidden;
+      overflow-x:hidden;              /* CHỐT: chặn trượt ngang */
       overscroll-behavior-x:none;
       -webkit-text-size-adjust:100%;
       touch-action:pan-y;
@@ -45,7 +45,6 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
       color:var(--text);
       -webkit-font-smoothing:antialiased;
-
       background:
         radial-gradient(900px 520px at 10% -10%, rgba(47,107,255,.22) 0%, transparent 65%),
         radial-gradient(900px 520px at 92% 0%, rgba(0,208,255,.16) 0%, transparent 70%),
@@ -65,6 +64,7 @@
       overflow:hidden;
     }
 
+    /* ===== HEADER ===== */
     .header{
       padding:14px 14px 10px;
       display:flex;
@@ -100,6 +100,7 @@
 
     .content{padding:0 14px 14px}
 
+    /* ===== INPUT PANEL ===== */
     .panel{
       background: rgba(255,255,255,.82);
       border: 1px solid var(--line);
@@ -130,7 +131,10 @@
       outline:none;resize:vertical;
       background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.75));
       box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
-      overflow-x:hidden;white-space:pre-wrap;word-break:break-word;
+      overflow-x:hidden;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere; /* CHỐT: URL dài không làm tràn */
       touch-action:pan-y;
     }
     textarea:focus{
@@ -158,6 +162,7 @@
     .btnSoft{color:#0b3d91;background: rgba(47,107,255,.10);border:1px solid rgba(47,107,255,.18);box-shadow:none;}
     .btnDanger{color:#b42318;background: rgba(255, 77, 79, .12);border:1px solid rgba(255, 77, 79, .30);box-shadow:none;}
 
+    /* ===== LAYOUT GRID ===== */
     .grid{
       margin-top:12px;
       display:grid;
@@ -165,8 +170,11 @@
       gap:12px;
       align-items:start;
     }
-    @media (max-width:740px){ .grid{grid-template-columns:1fr} }
+    @media (max-width:740px){
+      .grid{grid-template-columns:1fr}
+    }
 
+    /* ===== QR ===== */
     .qrWrap{
       background: rgba(255,255,255,.82);
       border: 1px solid var(--line);
@@ -190,6 +198,7 @@
       padding:14px;
       display:flex;align-items:center;justify-content:center;
       min-height:320px;position:relative;
+      overflow:hidden; /* CHỐT: không cho QR tràn ra ngoài */
     }
     .qrbox::after{
       content:"";position:absolute;inset:-60px;
@@ -197,9 +206,15 @@
       pointer-events:none;
     }
 
+    /* CHỐT: QR luôn co theo khung, không bị lệch/cắt */
     #qrImg{
-      display:block;width:300px;height:300px;max-width:100%;
-      position:relative;z-index:1;border-radius:18px;background:#fff;
+      display:block;
+      width:min(300px, 100%);
+      height:auto;
+      aspect-ratio: 1 / 1;
+      position:relative;z-index:1;
+      border-radius:18px;
+      background:#fff;
       border: 1px solid rgba(15, 23, 42, .08);
       box-shadow: 0 16px 34px rgba(2,6,23,.10);
       image-rendering: pixelated;
@@ -243,6 +258,7 @@
       padding: 8px 8px 10px;
     }
 
+    /* iOS-like swipe row */
     .row{
       position:relative;
       overflow:hidden;
@@ -252,7 +268,6 @@
     }
     .row:last-child{margin-bottom:0}
 
-    /* ✅ Ẩn actions hoàn toàn, chỉ khi open mới hiện */
     .rowActions{
       position:absolute;
       inset:0;
@@ -260,18 +275,10 @@
       align-items:center;
       justify-content:flex-end;
       padding-right: 10px;
-
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-
-      transition: opacity .15s ease, visibility .15s ease;
+      background: transparent;
+      pointer-events:none;
     }
-    .row.open .rowActions{
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
+    .row.open .rowActions{pointer-events:auto}
 
     .delBtn{
       width:46px;height:46px;
@@ -310,15 +317,6 @@
       border-color: rgba(15,23,42,.05);
     }
 
-    .row.selected .rowMain{
-      border-color: rgba(47,107,255,.42);
-      box-shadow: 0 0 0 3px rgba(47,107,255,.10);
-      background: rgba(255,255,255,.96);
-    }
-    .row.open.selected .rowMain{
-      box-shadow: 0 0 0 3px rgba(47,107,255,.10);
-    }
-
     .avatar{
       width:40px;height:40px;border-radius:999px;
       background: linear-gradient(135deg, rgba(47,107,255,.16), rgba(0,208,255,.14));
@@ -326,7 +324,7 @@
       display:flex;align-items:center;justify-content:center;
       color:#1d4ed8;font-weight:1000;
       flex:0 0 auto;
-      font-size:12px;
+      user-select:none;
     }
 
     .hmain{flex:1;min-width:0}
@@ -378,7 +376,7 @@
           </div>
         </div>
 
-        <div class="status" id="status">
+        <div class="status" aria-hidden="true">
           <span class="dot" id="dot"></span>
           <span id="pill">Ready</span>
         </div>
@@ -414,6 +412,7 @@
             <div class="qrWrap">
               <div class="qrHead">
                 <div class="h">QR</div>
+                <div class="hint">Tự nét theo màn hình</div>
               </div>
               <div class="qrbox" id="qr">
                 <div id="qrText">QR</div>
@@ -466,17 +465,19 @@
 
     const pill = document.getElementById('pill');
     const dot = document.getElementById('dot');
-    const hlist = document.getElementById('hlist');
 
-    const DISPLAY_SIZE = 300;
+    const hlist = document.getElementById('hlist');
+    const historyBox = document.getElementById('historyBox');
+
+    const DISPLAY_SIZE = 300; // hiển thị QR
     const MARGIN = 2;
     const LONGPRESS_MS = 450;
 
-    const HISTORY_KEY = "qr_tool_history_swipe_ioslike_v3_hideactions";
+    const HISTORY_KEY = "qr_tool_history_ioslike_v2";
     const HISTORY_MAX = 80;
 
-    const OPEN_REVEAL_PX = 52;
-    const REVEAL_X = 74;
+    const OPEN_REVEAL_PX = 52;  // ngưỡng để mở
+    const REVEAL_X = 74;        // px reveal
 
     const norm = (s) => (s || "").toString().trim();
     const setMsg = (s="") => msg.textContent = s;
@@ -542,7 +543,6 @@
     let history = loadHistory();
     let currentDataUrl = "";
     let openRowEl = null;
-    let selectedValue = null;
 
     function closeOpenRow(){
       if (openRowEl){
@@ -557,37 +557,31 @@
         return;
       }
 
-      hlist.innerHTML = history.map((it, idx) => {
-        const isSel = selectedValue && it.value === selectedValue;
-        return `
-          <div class="row ${isSel ? "selected" : ""}" data-idx="${idx}">
-            <div class="rowActions">
-              <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
-                <svg viewBox="0 0 24 24">
-                  <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
-                </svg>
-              </button>
-            </div>
+      hlist.innerHTML = history.map((it, idx) => `
+        <div class="row" data-idx="${idx}">
+          <div class="rowActions">
+            <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
+              </svg>
+            </button>
+          </div>
 
-            <div class="rowMain" data-action="open" data-idx="${idx}">
-              <div class="avatar">${String(idx+1)}</div>
-              <div class="hmain">
-                <div class="htext">${escapeHtml(it.value)}</div>
-                <div class="htime">${fmtTime(it.ts)}</div>
-              </div>
+          <div class="rowMain" data-action="open" data-idx="${idx}">
+            <div class="avatar">•</div>
+            <div class="hmain">
+              <div class="htext">${escapeHtml(it.value)}</div>
+              <div class="htime">${fmtTime(it.ts)}</div>
             </div>
           </div>
-        `;
-      }).join("");
+        </div>
+      `).join("");
     }
 
     function pushHistory(value){
       const v = norm(value);
       if (!v) return;
       const now = Date.now();
-
-      selectedValue = v;
-
       const filtered = history.filter(it => it.value !== v);
       history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
       saveHistory(history);
@@ -596,8 +590,6 @@
 
     function deleteOne(idx){
       if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
-      if (selectedValue && history[idx].value === selectedValue) selectedValue = null;
-
       history.splice(idx, 1);
       saveHistory(history);
       renderHistory();
@@ -660,8 +652,6 @@
         img.id = "qrImg";
         img.src = dataUrl;
         img.alt = "QR";
-        img.style.width = DISPLAY_SIZE + "px";
-        img.style.height = DISPLAY_SIZE + "px";
         qr.appendChild(img);
         attachLongPress(img);
 
@@ -677,7 +667,7 @@
       }
     }
 
-    // Swipe: vuốt trái mới lộ nút xoá (và chỉ hiện khi OPEN)
+    // ===== Swipe giống iOS =====
     function bindSwipe(){
       let startX=0, startY=0;
       let dragging=false;
@@ -715,11 +705,7 @@
         startY = touch.clientY;
         dragging = false;
 
-        if (row.classList.contains("open")){
-          setX(row, -REVEAL_X, true);
-        } else {
-          setX(row, 0, true);
-        }
+        setX(row, row.classList.contains("open") ? -REVEAL_X : 0, true);
       }
 
       function onMove(e){
@@ -788,7 +774,6 @@
       if (!main) return;
 
       const row = main.closest(".row");
-
       if (row && row.classList.contains("open")){
         closeOpenRow();
         return;
@@ -797,10 +782,6 @@
       const idx = Number(main.getAttribute("data-idx"));
       const it = history[idx];
       if (!it) return;
-
-      selectedValue = it.value;
-      renderHistory();
-
       t.value = it.value;
       draw(it.value, false);
     });
@@ -811,21 +792,9 @@
       if (!e.target.closest("#historyBox")) closeOpenRow();
     });
 
-    // Buttons
-    document.getElementById('gen').addEventListener('click', () => {
-      closeOpenRow();
-      draw(t.value, true);
-    });
-
-    document.getElementById('clr').addEventListener('click', () => {
-      closeOpenRow();
-      t.value = "";
-      selectedValue = null;
-      renderHistory();
-      draw("", false);
-      setMsg("");
-    });
-
+    // Buttons chính
+    document.getElementById('gen').addEventListener('click', () => { closeOpenRow(); draw(t.value, true); });
+    document.getElementById('clr').addEventListener('click', () => { closeOpenRow(); t.value = ""; draw("", false); setMsg(""); });
     document.getElementById('paste').addEventListener('click', async () => {
       try{
         closeOpenRow();
@@ -845,28 +814,52 @@
       }
     });
 
-    // Xoá tất cả: có xác nhận
-    document.getElementById("clearHistory").addEventListener("click", () => {
-      closeOpenRow();
+    // ===== Xoá tất cả: xác nhận 2 bước =====
+    (function setupClearAllConfirm(){
+      const btn = document.getElementById("clearHistory");
+      let armed = false;
+      let timer = null;
 
-      if (!history.length){
-        setMsg("Lịch sử trống");
+      const reset = () => {
+        armed = false;
+        btn.textContent = "Xoá tất cả";
+        btn.style.background = "rgba(255, 77, 79, .12)";
+        btn.style.borderColor = "rgba(255, 77, 79, .30)";
+        btn.style.color = "#b42318";
+        if (timer) { clearTimeout(timer); timer = null; }
+      };
+
+      document.addEventListener("click", (e) => {
+        if (!armed) return;
+        if (e.target === btn || btn.contains(e.target)) return;
+        reset();
+      });
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!armed){
+          armed = true;
+          btn.textContent = "Xác nhận";
+          btn.style.background = "#ff3b30";
+          btn.style.borderColor = "rgba(255,255,255,.35)";
+          btn.style.color = "#fff";
+          timer = setTimeout(reset, 3000);
+          return;
+        }
+
+        history = [];
+        saveHistory(history);
+        renderHistory();
+        closeOpenRow();
+
+        setMsg("Đã xoá tất cả");
         setTimeout(()=>setMsg(""), 700);
-        return;
-      }
-
-      const ok = confirm("Xoá toàn bộ lịch sử?\nKhông thể hoàn tác.");
-      if (!ok) return;
-
-      history = [];
-      selectedValue = null;
-      saveHistory(history);
-      renderHistory();
-
-      setMsg("Đã xoá tất cả");
-      setTimeout(()=>setMsg(""), 700);
-      setStatus("ready");
-    });
+        setStatus("ready");
+        reset();
+      });
+    })();
 
     // auto update khi gõ (không lưu lịch sử)
     let typingTimer = null;

@@ -1,878 +1,847 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport"
-        content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <title>QR Tool</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Product Finder Pro" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon.PNG" />
+  <title>Product Finder Pro</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f6f8ff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" href="icon.PNG">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode/dist/JsBarcode.all.min.js"></script>
 
   <style>
     :root{
-      --bg:#f5f7ff;
-      --text:#0b1220;
-      --muted:#6b7280;
-      --line: rgba(15, 23, 42, .08);
-
-      --blue:#2f6bff;
-      --blue2:#1d4ed8;
-
-      --danger:#ff3b30; /* iOS red */
-      --radius:22px;
-      --shadow: 0 18px 45px rgba(2,6,23,.10);
-      --shadow2: 0 10px 24px rgba(2,6,23,.08);
+      --bg1:#0b1020;
+      --bg2:#111827;
+      --card:#ffffff;
+      --card2:#f8fafc;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --danger:#ef4444;
+      --shadow: 0 24px 60px rgba(2, 6, 23, .22);
+      --radius: 24px;
     }
 
-    *{box-sizing:border-box}
-    html, body{
-      width:100%;
-      overflow-x:hidden;              /* CHỐT: chặn trượt ngang */
-      overscroll-behavior-x:none;
-      -webkit-text-size-adjust:100%;
-      touch-action:pan-y;
-      background:var(--bg);
-    }
+    * { box-sizing: border-box; }
 
     body{
       margin:0;
-      padding: calc(16px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
+      min-height:100vh;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background:
-        radial-gradient(900px 520px at 10% -10%, rgba(47,107,255,.22) 0%, transparent 65%),
-        radial-gradient(900px 520px at 92% 0%, rgba(0,208,255,.16) 0%, transparent 70%),
-        radial-gradient(900px 520px at 50% 110%, rgba(255, 59, 48, .10) 0%, transparent 60%),
-        var(--bg);
+        radial-gradient(900px 500px at 15% 0%, rgba(37,99,235,.34), transparent 55%),
+        radial-gradient(800px 450px at 100% 10%, rgba(99,102,241,.22), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--text);
+      padding: 18px;
     }
-
-    .wrap{max-width:760px;margin:0 auto}
 
     .app{
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(255,255,255,.55);
-      border-radius: calc(var(--radius) + 6px);
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hero{
+      color:#fff;
+      margin: 10px 6px 16px;
+    }
+
+    .hero h1{
+      margin:0;
+      font-size: 30px;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p{
+      margin: 10px 0 0;
+      max-width: 62ch;
+      color: rgba(255,255,255,.8);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .shell{
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      overflow:hidden;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
     }
 
-    /* ===== HEADER ===== */
-    .header{
-      padding:14px 14px 10px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
+    .top{
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      display: grid;
+      gap: 14px;
     }
 
-    .brand{display:flex; gap:10px; align-items:center; min-width:0;}
-    .logo{
-      width:38px;height:38px;border-radius:12px;
-      background: linear-gradient(135deg, rgba(47,107,255,.18), rgba(0,208,255,.14));
-      border:1px solid rgba(47,107,255,.18);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: var(--shadow2);
-      flex:0 0 auto;
-    }
-    .logo svg{width:22px;height:22px;opacity:.9}
-    .titles{min-width:0}
-    .title{margin:0;font-size:16px;font-weight:1000;letter-spacing:.2px;line-height:1.15;}
-    .sub{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .status{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 12px;border-radius:999px;
-      background: rgba(255,255,255,.75);
-      border:1px solid var(--line);
-      box-shadow: 0 8px 18px rgba(2,6,23,.06);
-      user-select:none;flex:0 0 auto;
-    }
-    .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8;box-shadow: 0 0 0 4px rgba(148,163,184,.18);}
-    .status span{font-size:12px;font-weight:1000;color:#0f172a;}
-
-    .content{padding:0 14px 14px}
-
-    /* ===== INPUT PANEL ===== */
-    .panel{
-      background: rgba(255,255,255,.82);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: 0 12px 30px rgba(2,6,23,.06);
-      overflow:hidden;
-    }
-    .panelInner{padding:12px}
-
-    .labelRow{
-      display:flex;justify-content:space-between;align-items:center;gap:10px;
-      margin-bottom:8px;color:var(--muted);font-size:12px;font-weight:800;
-    }
-    .lenPill{
-      padding:6px 10px;border-radius:999px;
-      background: rgba(47,107,255,.10);
-      border:1px solid rgba(47,107,255,.18);
-      color:#1d4ed8;font-weight:1000;font-size:12px;user-select:none;
-    }
-
-    textarea{
-      width:100%;
-      min-height:96px;
-      padding:12px 12px 14px;
-      font-size:16px;line-height:1.35;
-      border-radius:16px;
-      border:1px solid rgba(15, 23, 42, .10);
-      outline:none;resize:vertical;
-      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.75));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
-      overflow-x:hidden;
-      white-space:pre-wrap;
-      word-break:break-word;
-      overflow-wrap:anywhere; /* CHỐT: URL dài không làm tràn */
-      touch-action:pan-y;
-    }
-    textarea:focus{
-      border-color: rgba(47,107,255,.35);
-      box-shadow: 0 0 0 4px rgba(47,107,255,.12), inset 0 1px 0 rgba(255,255,255,.75);
-    }
-
-    .actions{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-
-    button{
-      appearance:none;border:none;border-radius:16px;
-      padding:12px 12px;font-size:14px;font-weight:1000;
-      cursor:pointer;transition:.12s;
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-      box-shadow: 0 10px 22px rgba(2,6,23,.07);
-    }
-    button:active{transform:translateY(1px)}
-    .btnPrimary{color:#fff;background: linear-gradient(135deg, var(--blue), var(--blue2));}
-    .btnSoft{color:#0b3d91;background: rgba(47,107,255,.10);border:1px solid rgba(47,107,255,.18);box-shadow:none;}
-    .btnDanger{color:#b42318;background: rgba(255, 77, 79, .12);border:1px solid rgba(255, 77, 79, .30);box-shadow:none;}
-
-    /* ===== LAYOUT GRID ===== */
-    .grid{
-      margin-top:12px;
-      display:grid;
-      grid-template-columns: 1fr 340px;
-      gap:12px;
-      align-items:start;
-    }
-    @media (max-width:740px){
-      .grid{grid-template-columns:1fr}
-    }
-
-    /* ===== QR ===== */
-    .qrWrap{
-      background: rgba(255,255,255,.82);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: 0 12px 30px rgba(2,6,23,.06);
-      overflow:hidden;
-    }
-    .qrHead{
-      padding:10px 12px;
-      display:flex;justify-content:space-between;align-items:center;gap:10px;
-      border-bottom:1px solid var(--line);
-      background: linear-gradient(180deg, rgba(47,107,255,.08), rgba(255,255,255,0));
-    }
-    .qrHead .h{
-      font-size:12px;font-weight:1000;color:#0f172a;
-      letter-spacing:.4px;text-transform:uppercase;
-    }
-    .hint{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .qrbox{
-      padding:14px;
-      display:flex;align-items:center;justify-content:center;
-      min-height:320px;position:relative;
-      overflow:hidden; /* CHỐT: không cho QR tràn ra ngoài */
-    }
-    .qrbox::after{
-      content:"";position:absolute;inset:-60px;
-      background: radial-gradient(520px 260px at 50% 10%, rgba(47,107,255,.16), transparent 60%);
-      pointer-events:none;
-    }
-
-    /* CHỐT: QR luôn co theo khung, không bị lệch/cắt */
-    #qrImg{
-      display:block;
-      width:min(300px, 100%);
-      height:auto;
-      aspect-ratio: 1 / 1;
-      position:relative;z-index:1;
-      border-radius:18px;
-      background:#fff;
-      border: 1px solid rgba(15, 23, 42, .08);
-      box-shadow: 0 16px 34px rgba(2,6,23,.10);
-      image-rendering: pixelated;
-      -webkit-touch-callout: default;
-      user-select:none;
-    }
-    #qrText{
-      position:relative;z-index:1;color:var(--muted);
-      font-size:12px;font-weight:1000;letter-spacing:.5px;text-transform:uppercase;
-      user-select:none;padding:10px 12px;border-radius:999px;
-      background: rgba(255,255,255,.75);
-      border: 1px solid var(--line);
-    }
-
-    /* ===== HISTORY ===== */
-    .history{
-      margin-top:12px;
-      background: rgba(255,255,255,.82);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: 0 12px 30px rgba(2,6,23,.06);
-      overflow:hidden;
-    }
-    .hTop{
-      padding:10px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      border-bottom:1px solid var(--line);
-      background: linear-gradient(180deg, rgba(0,208,255,.10), rgba(255,255,255,0));
-    }
-    .hTop .h{
-      font-size:12px;font-weight:1000;color:#0f172a;
-      letter-spacing:.4px;text-transform:uppercase;
-    }
-
-    .hlist{
-      max-height:280px;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      overscroll-behavior:contain;
-      background: rgba(255,255,255,.60);
-      padding: 8px 8px 10px;
-    }
-
-    /* iOS-like swipe row */
     .row{
-      position:relative;
-      overflow:hidden;
-      border-radius: 16px;
-      margin-bottom: 8px;
-      background: transparent;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
     }
-    .row:last-child{margin-bottom:0}
 
-    .rowActions{
-      position:absolute;
-      inset:0;
+    .fileRow{
       display:flex;
+      gap:10px;
       align-items:center;
-      justify-content:flex-end;
-      padding-right: 10px;
-      background: transparent;
-      pointer-events:none;
+      flex-wrap: wrap;
     }
-    .row.open .rowActions{pointer-events:auto}
 
-    .delBtn{
-      width:46px;height:46px;
-      border-radius:999px;
+    input[type=file]{ display:none; }
+
+    .fileBtn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding: 13px 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff;
+      font-weight:800;
+      font-size:15px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(37,99,235,.22);
+      user-select:none;
+      min-width: 140px;
+    }
+
+    .fileName{
+      color: var(--muted);
+      font-size: 14px;
+      min-width: 180px;
+      flex:1;
+    }
+
+    .searchRow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      width:100%;
+    }
+
+    .searchWrap{
+      position:relative;
+      flex:1;
+      min-width:0;
+    }
+
+    .search{
+      width:100%;
+      border:1px solid #dbe4ef;
+      background:#fff;
+      padding:15px 46px 15px 16px;
+      border-radius:16px;
+      font-size:16px;
+      outline:none;
+      color:var(--text);
+    }
+
+    .search:focus{
+      border-color: rgba(37,99,235,.45);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+    }
+
+    .clearBtn{
+      position:absolute;
+      top:50%;
+      right:10px;
+      transform:translateY(-50%);
       border:none;
       background: var(--danger);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: 0 10px 18px rgba(255,59,48,.22);
-      padding:0;margin:0;
-    }
-    .delBtn:active{transform:translateY(1px)}
-    .delBtn svg{width:22px;height:22px;fill:#fff}
-
-    .rowMain{
-      position:relative;
-      display:flex;
-      gap:10px;
-      padding: 12px 12px;
-      align-items:center;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(15,23,42,.06);
-      border-radius: 16px;
-
-      transform: translateX(0px);
-      transition: transform .18s ease;
-      will-change: transform;
-
-      touch-action: pan-y;
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
+      color:#fff;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
     }
 
-    .row.open .rowMain{
-      transform: translateX(-74px);
-      background: #eef0f4;
-      border-color: rgba(15,23,42,.05);
-    }
-
-    .avatar{
-      width:40px;height:40px;border-radius:999px;
-      background: linear-gradient(135deg, rgba(47,107,255,.16), rgba(0,208,255,.14));
-      border: 1px solid rgba(47,107,255,.14);
-      display:flex;align-items:center;justify-content:center;
-      color:#1d4ed8;font-weight:1000;
-      flex:0 0 auto;
-      user-select:none;
-    }
-
-    .hmain{flex:1;min-width:0}
-    .htext{
-      font-size:14px;
-      font-weight:1000;
-      color:#0f172a;
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .htime{
-      margin-top:4px;
-      font-size:12px;
-      color:var(--muted);
+    .searchBtn{
+      border:none;
+      border-radius:16px;
+      padding: 0 18px;
+      height: 54px;
+      min-width: 92px;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff;
       font-weight:800;
+      font-size:15px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(37,99,235,.18);
+      flex:0 0 auto;
+    }
+
+    .meta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 9px 12px;
+      border-radius:999px;
+      background:#eff6ff;
+      color:var(--primary2);
+      font-weight:800;
+      border:1px solid #dbeafe;
+    }
+
+    .suggestionBox{
+      position:absolute;
+      left:0;
+      right:0;
+      top: calc(100% + 8px);
+      z-index:30;
+      display:none;
+      border:1px solid #dbe4ef;
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow: 0 16px 36px rgba(15,23,42,.14);
+    }
+
+    .suggestionHead{
+      padding:10px 14px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      color:var(--muted);
+      background:#f8fafc;
+      border-bottom:1px solid #e5e7eb;
+    }
+
+    .suggestionList{
+      max-height: 280px;
+      overflow:auto;
+    }
+
+    .suggestionItem{
+      padding:12px 14px;
+      border-bottom:1px solid #f1f5f9;
+      cursor:pointer;
+      background:#fff;
+      transition: background .12s ease;
+    }
+
+    .suggestionItem:last-child{ border-bottom:none; }
+
+    .suggestionItem:hover{
+      background:#eff6ff;
+    }
+
+    .suggestionName{
+      font-size:15px;
+      font-weight:800;
+      color:#0f172a;
+      line-height:1.35;
+    }
+
+    .suggestionCode{
+      margin-top:4px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .content{
+      display:grid;
+      grid-template-columns: 1fr;
+    }
+
+    .right{
+      padding: 18px;
+      display:grid;
+      gap:16px;
+    }
+
+    .resultCard{
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      box-shadow: 0 10px 18px rgba(15,23,42,.05);
+    }
+
+    .productName{
+      margin:0;
+      font-size: 19px;
+      line-height:1.35;
+      font-weight:900;
+      letter-spacing:-.01em;
+      color:#0f172a;
+    }
+
+    .productCode{
+      display:inline-flex;
+      align-items:center;
+      margin-top:10px;
+      padding: 8px 12px;
+      border-radius:999px;
+      background:#eff6ff;
+      border:1px solid #dbeafe;
+      color:var(--primary2);
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .blockLabel{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+
+    .box{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #barcode{
+      width:100%;
+      height:auto;
+      display:block;
+      shape-rendering: crispEdges;
+      text-rendering: geometricPrecision;
+    }
+
+    #qrcode{
+      display:grid;
+      place-items:center;
     }
 
     .empty{
-      padding:12px;
-      color:#94a3b8;
-      font-size:12px;
-      font-weight:1000;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.6;
     }
 
-    .foot{
-      display:flex;justify-content:space-between;align-items:center;gap:10px;
-      margin-top:10px;color:var(--muted);font-size:12px;font-weight:800;
-      padding: 0 2px;min-height:18px;
+    .footer{
+      padding:14px 18px 18px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      background:#fff;
     }
-    #msg{min-height:18px}
+
+    @media (min-width: 860px){
+      .row{
+        grid-template-columns: 1fr 1.5fr;
+      }
+    }
+
+    @media (prefers-color-scheme: dark){
+      .shell{
+        background: rgba(9,14,25,.92);
+      }
+
+      .top, .right, .resultCard, .box, .footer{
+        background:#0b1220;
+      }
+
+      .productName, .suggestionName{
+        color:#f8fafc;
+      }
+
+      .search{
+        background:#0b1220;
+        color:#f8fafc;
+        border-color:#223047;
+      }
+
+      .fileName, .meta, .blockLabel, .empty, .footer, .suggestionCode{
+        color:#94a3b8;
+      }
+
+      .badge, .productCode{
+        background: rgba(37,99,235,.16);
+        color:#bfdbfe;
+        border-color: rgba(59,130,246,.25);
+      }
+
+      .suggestionBox{
+        background:#0b1220;
+        border-color:#223047;
+      }
+
+      .suggestionHead{
+        background:#111827;
+        color:#94a3b8;
+        border-color:#223047;
+      }
+
+      .suggestionItem{
+        background:#0b1220;
+        border-color:#223047;
+      }
+
+      .suggestionItem:hover{
+        background: rgba(37,99,235,.14);
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="app">
-      <div class="header">
-        <div class="brand">
-          <div class="logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 2h2v2h-2v-2Zm-2-2h2v2h-2v-2Zm4 4h2v2h-2v-2Zm2-4h2v2h-2v-2Zm-4-2h6v6h-6v-6Z" fill="rgba(29,78,216,.95)"/>
-              <path d="M6 6h2v2H6V6Zm10 0h2v2h-2V6ZM6 16h2v2H6v-2Z" fill="rgba(0,208,255,.9)"/>
-            </svg>
-          </div>
-          <div class="titles">
-            <p class="title">QR Tool</p>
-            <p class="sub">Clipboard / nhập tay → QR + lịch sử</p>
-          </div>
-        </div>
-
-        <div class="status" aria-hidden="true">
-          <span class="dot" id="dot"></span>
-          <span id="pill">Ready</span>
-        </div>
-      </div>
-
-      <div class="content">
-        <div class="grid">
-          <!-- LEFT -->
-          <div class="panel">
-            <div class="panelInner">
-              <div class="labelRow">
-                <div>Nhập nội dung</div>
-                <div class="lenPill">Độ dài: <span id="len">0</span></div>
-              </div>
-
-              <textarea id="t" placeholder="Dán nội dung..."></textarea>
-
-              <div class="actions">
-                <button class="btnPrimary" id="paste" type="button">📋 Dán</button>
-                <button class="btnSoft" id="gen" type="button">⚡ Tạo QR</button>
-                <button class="btnDanger" id="clr" type="button">🗑️ Xoá</button>
-              </div>
-
-              <div class="foot">
-                <div id="msg"></div>
-                <div class="hint">Nhấn giữ QR để lưu</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- RIGHT -->
-          <div>
-            <div class="qrWrap">
-              <div class="qrHead">
-                <div class="h">QR</div>
-                <div class="hint">Tự nét theo màn hình</div>
-              </div>
-              <div class="qrbox" id="qr">
-                <div id="qrText">QR</div>
-              </div>
-            </div>
-
-            <div class="history" id="historyBox">
-              <div class="hTop">
-                <div class="h">Lịch sử</div>
-                <button class="btnDanger" id="clearHistory" type="button"
-                        style="padding:9px 12px;border-radius:14px;font-size:12px;font-weight:1000;">
-                  Xoá tất cả
-                </button>
-              </div>
-              <div class="hlist" id="hlist"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="app">
+  <div class="hero">
+    <h1>🔍 Product Finder Pro</h1>
+    <p>Tra cứu nhanh từ Google Sheet, gợi ý theo tên hoặc mã, tự cập nhật theo lịch và hiển thị barcode + QR ngay trên iPhone.</p>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script>
-    // PWA
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
-      });
-    }
+  <div class="shell">
+    <div class="top">
+      <div class="row">
+        <div class="fileRow">
+          <label class="fileBtn" for="fileInput">📂 Chọn CSV</label>
+          <input type="file" id="fileInput" accept=".csv" />
+          <div class="fileName" id="fileName">Đang dùng dữ liệu Google Sheet</div>
+        </div>
 
-    // Lock zoom iOS
-    (function lockZoomIOS(){
-      ["gesturestart","gesturechange","gestureend"].forEach(ev => {
-        document.addEventListener(ev, (e) => e.preventDefault(), { passive:false });
-      });
-      let lastTouchEnd = 0;
-      document.addEventListener("touchend", function(e){
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) e.preventDefault();
-        lastTouchEnd = now;
-      }, { passive:false });
-      document.addEventListener("dblclick", (e) => e.preventDefault(), { passive:false });
-    })();
+        <div class="searchRow">
+          <div class="searchWrap">
+            <input id="search" class="search" placeholder="Tìm tên hoặc mã..." autocomplete="off" />
+            <button class="clearBtn" id="clearBtn" type="button">×</button>
 
-    const t = document.getElementById('t');
-    const qr = document.getElementById('qr');
-    const msg = document.getElementById('msg');
-    const lenEl = document.getElementById('len');
-
-    const pill = document.getElementById('pill');
-    const dot = document.getElementById('dot');
-
-    const hlist = document.getElementById('hlist');
-    const historyBox = document.getElementById('historyBox');
-
-    const DISPLAY_SIZE = 300; // hiển thị QR
-    const MARGIN = 2;
-    const LONGPRESS_MS = 450;
-
-    const HISTORY_KEY = "qr_tool_history_ioslike_v2";
-    const HISTORY_MAX = 80;
-
-    const OPEN_REVEAL_PX = 52;  // ngưỡng để mở
-    const REVEAL_X = 74;        // px reveal
-
-    const norm = (s) => (s || "").toString().trim();
-    const setMsg = (s="") => msg.textContent = s;
-
-    function setStatus(mode){
-      if (mode === "ready"){
-        pill.textContent = "Ready";
-        dot.style.background = "#94a3b8";
-        dot.style.boxShadow = "0 0 0 4px rgba(148,163,184,.18)";
-        return;
-      }
-      if (mode === "working"){
-        pill.textContent = "…";
-        dot.style.background = "#f59e0b";
-        dot.style.boxShadow = "0 0 0 4px rgba(245,158,11,.18)";
-        return;
-      }
-      if (mode === "error"){
-        pill.textContent = "Error";
-        dot.style.background = "#ef4444";
-        dot.style.boxShadow = "0 0 0 4px rgba(239,68,68,.18)";
-        return;
-      }
-      pill.textContent = "OK";
-      dot.style.background = "#10b981";
-      dot.style.boxShadow = "0 0 0 4px rgba(16,185,129,.18)";
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "").replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-      }[m]));
-    }
-
-    function fmtTime(ts){
-      const d = new Date(ts);
-      const dd = String(d.getDate()).padStart(2,"0");
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mi = String(d.getMinutes()).padStart(2,"0");
-      return `${dd}/${mm} ${hh}:${mi}`;
-    }
-
-    function loadHistory(){
-      try{
-        const raw = localStorage.getItem(HISTORY_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(arr)) return [];
-        if (arr.length && typeof arr[0] === "string"){
-          return arr.map(v => ({ value: String(v), ts: Date.now() }));
-        }
-        return arr
-          .filter(x => x && typeof x.value === "string" && typeof x.ts === "number")
-          .slice(0, HISTORY_MAX);
-      }catch{
-        return [];
-      }
-    }
-    function saveHistory(arr){
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
-    }
-
-    let history = loadHistory();
-    let currentDataUrl = "";
-    let openRowEl = null;
-
-    function closeOpenRow(){
-      if (openRowEl){
-        openRowEl.classList.remove("open");
-        openRowEl = null;
-      }
-    }
-
-    function renderHistory(){
-      if (!history.length){
-        hlist.innerHTML = `<div class="empty">Trống</div>`;
-        return;
-      }
-
-      hlist.innerHTML = history.map((it, idx) => `
-        <div class="row" data-idx="${idx}">
-          <div class="rowActions">
-            <button class="delBtn" type="button" data-action="delete" data-idx="${idx}" aria-label="Xoá">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 7h2v9h-2v-9Zm4 0h2v9h-2v-9ZM7 10h2v9H7v-9Z"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="rowMain" data-action="open" data-idx="${idx}">
-            <div class="avatar">•</div>
-            <div class="hmain">
-              <div class="htext">${escapeHtml(it.value)}</div>
-              <div class="htime">${fmtTime(it.ts)}</div>
+            <div class="suggestionBox" id="suggestionBox">
+              <div class="suggestionHead">Gợi ý</div>
+              <div class="suggestionList" id="suggestionList"></div>
             </div>
           </div>
+
+          <button class="searchBtn" id="searchBtn" type="button">Tìm</button>
         </div>
-      `).join("");
+      </div>
+
+      <div class="meta">
+        <div class="badge" id="countBadge">Đang tải dữ liệu...</div>
+        <div id="statusText">Tự cập nhật từ Google Sheet</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <section class="right">
+        <div class="resultCard" id="detailCard">
+          <div class="empty">Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.</div>
+        </div>
+
+        <div>
+          <div class="blockLabel">Barcode</div>
+          <div class="box">
+            <svg id="barcode"></svg>
+          </div>
+        </div>
+
+        <div>
+          <div class="blockLabel">QR Code</div>
+          <div class="box">
+            <div id="qrcode"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">
+      <div>Chạy tốt nhất trên Safari.</div>
+      <div>Dữ liệu chỉ cần cập nhật trong Google Sheet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRW5XFMMvgun4D_XFvztStaxIvY_MgaxCmoZofYapLDRkE6EloODQix5rPYXoF2Rl4NjkjZgBWoBsPf/pub?gid=0&single=true&output=csv";
+
+let products = [];
+let searchTimer = null;
+let lastSelected = null;
+
+const fileInput = document.getElementById("fileInput");
+const fileName = document.getElementById("fileName");
+const searchInput = document.getElementById("search");
+const clearBtn = document.getElementById("clearBtn");
+const searchBtn = document.getElementById("searchBtn");
+const suggestionBox = document.getElementById("suggestionBox");
+const suggestionList = document.getElementById("suggestionList");
+const detailCard = document.getElementById("detailCard");
+const countBadge = document.getElementById("countBadge");
+const statusText = document.getElementById("statusText");
+const barcodeEl = document.getElementById("barcode");
+const qrEl = document.getElementById("qrcode");
+
+function normalizeText(str) {
+  return (str || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeHtml(text) {
+  return (text || "").toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function parseCsvLine(line) {
+  const out = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"' && line[i - 1] !== "\\") {
+      inQuotes = !inQuotes;
+      continue;
     }
-
-    function pushHistory(value){
-      const v = norm(value);
-      if (!v) return;
-      const now = Date.now();
-      const filtered = history.filter(it => it.value !== v);
-      history = [{ value: v, ts: now }, ...filtered].slice(0, HISTORY_MAX);
-      saveHistory(history);
-      renderHistory();
+    if (ch === "," && !inQuotes) {
+      out.push(cur);
+      cur = "";
+      continue;
     }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map(v => v.trim());
+}
 
-    function deleteOne(idx){
-      if (Number.isNaN(idx) || idx < 0 || idx >= history.length) return;
-      history.splice(idx, 1);
-      saveHistory(history);
-      renderHistory();
-      closeOpenRow();
-      setMsg("Đã xoá 1 mục");
-      setTimeout(()=>setMsg(""), 700);
-    }
+function parseCsv(text) {
+  if (!text) return [];
 
-    function showEmptyQR(){
-      currentDataUrl = "";
-      qr.innerHTML = `<div id="qrText">QR</div>`;
-    }
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 
-    function fallbackDownloadPNG(){
-      if (!currentDataUrl) return;
-      const a = document.createElement("a");
-      a.href = currentDataUrl;
-      a.download = "qr.png";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setMsg("Đã tải PNG");
-      setTimeout(()=>setMsg(""), 900);
-    }
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
 
-    function attachLongPress(img){
-      let timer = null;
-      img.addEventListener("touchstart", () => {
-        timer = setTimeout(() => fallbackDownloadPNG(), LONGPRESS_MS);
-      }, { passive:true });
+  const first = parseCsvLine(lines[0]);
+  const normalizedFirst = first.map(x => normalizeText(x));
 
-      ["touchend","touchcancel","touchmove"].forEach(ev => {
-        img.addEventListener(ev, () => {
-          if (timer) { clearTimeout(timer); timer = null; }
-        }, { passive:true });
+  const hasHeader =
+    normalizedFirst.includes("name") ||
+    normalizedFirst.includes("ten_sp") ||
+    normalizedFirst.includes("codecontent") ||
+    normalizedFirst.includes("ma_sp") ||
+    normalizedFirst.includes("code") ||
+    normalizedFirst.includes("barcode");
+
+  let nameIndex = 0;
+  let codeIndex = 1;
+  let startIndex = 0;
+
+  if (hasHeader) {
+    nameIndex = normalizedFirst.findIndex(h => h === "name" || h === "ten_sp" || h === "product_name");
+    codeIndex = normalizedFirst.findIndex(h => h === "codecontent" || h === "ma_sp" || h === "code" || h === "barcode" || h === "sku");
+    if (nameIndex < 0) nameIndex = 0;
+    if (codeIndex < 0) codeIndex = 1;
+    startIndex = 1;
+  }
+
+  const parsed = [];
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const row = parseCsvLine(lines[i]);
+    if (!row.length) continue;
+
+    const name = row[nameIndex] ?? row[0] ?? "";
+    const code = row[codeIndex] ?? row[1] ?? "";
+
+    const cleanName = String(name).trim();
+    const cleanCode = String(code).trim();
+
+    if (cleanName && cleanCode) {
+      parsed.push({
+        name: cleanName,
+        code: cleanCode,
+        kName: normalizeText(cleanName),
+        kCode: normalizeText(cleanCode)
       });
     }
+  }
 
-    async function draw(value, shouldSave=true){
-      const v = norm(value);
-      lenEl.textContent = String(v.length);
+  return parsed;
+}
 
-      if(!v){
-        showEmptyQR();
-        setMsg("");
-        setStatus("ready");
-        return;
+function loadSavedData() {
+  try {
+    const raw = localStorage.getItem("productsData");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem("productsData", JSON.stringify(data));
+  } catch {}
+}
+
+function setEmptyState(message) {
+  detailCard.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+  qrEl.innerHTML = "";
+  barcodeEl.innerHTML = "";
+}
+
+function renderProduct(item) {
+  lastSelected = item;
+
+  detailCard.innerHTML = `
+    <h2 class="productName">${escapeHtml(item.name)}</h2>
+    <div class="productCode">Mã: ${escapeHtml(item.code)}</div>
+  `;
+
+  qrEl.innerHTML = "";
+  const qrCanvas = document.createElement("canvas");
+  QRCode.toCanvas(qrCanvas, item.code, { width: 190, margin: 2 });
+  qrEl.appendChild(qrCanvas);
+
+  barcodeEl.innerHTML = "";
+  JsBarcode(barcodeEl, item.code, {
+    format: "CODE128",
+    lineColor: "#0f172a",
+    background: "#ffffff",
+    width: 3.2,
+    height: 110,
+    margin: 18,
+    displayValue: true,
+    fontSize: 18,
+    textMargin: 8,
+    textAlign: "center",
+    font: "Arial"
+  });
+
+  barcodeEl.style.width = "100%";
+  barcodeEl.style.height = "auto";
+  barcodeEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+}
+
+function hideSuggestions() {
+  suggestionBox.style.display = "none";
+  suggestionList.innerHTML = "";
+}
+
+function showSuggestions(results) {
+  suggestionList.innerHTML = "";
+
+  if (!results.length) {
+    suggestionBox.style.display = "block";
+    suggestionList.innerHTML = `
+      <div class="suggestionItem" style="cursor:default;opacity:.8">
+        <div class="suggestionName">Không có kết quả phù hợp</div>
+        <div class="suggestionCode">Thử gõ gần đúng hơn</div>
+      </div>
+    `;
+    return;
+  }
+
+  results.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "suggestionItem";
+    row.innerHTML = `
+      <div class="suggestionName">${escapeHtml(item.name)}</div>
+      <div class="suggestionCode">${escapeHtml(item.code)}</div>
+    `;
+    row.addEventListener("click", () => {
+      searchInput.value = "";
+      hideSuggestions();
+      renderProduct(item);
+      statusText.textContent = "Đã chọn sản phẩm";
+      searchInput.blur();
+    });
+    suggestionList.appendChild(row);
+  });
+
+  suggestionBox.style.display = "block";
+}
+
+function fuzzyScore(text, query) {
+  const t = normalizeText(text);
+  const q = normalizeText(query);
+  if (!q) return 0;
+
+  let score = 0;
+  if (t === q) score += 120;
+  if (t.startsWith(q)) score += 80;
+  if (t.includes(q)) score += 50;
+
+  const parts = q.split(/\s+/).filter(Boolean);
+  let hit = 0;
+  for (const part of parts) {
+    if (t.includes(part)) hit += 1;
+  }
+  score += hit * 12;
+
+  score -= Math.abs(t.length - q.length) * 0.15;
+  return score;
+}
+
+function searchAndSuggest() {
+  const qRaw = searchInput.value.trim();
+  const q = normalizeText(qRaw);
+
+  if (!q) {
+    hideSuggestions();
+    if (!lastSelected) setEmptyState("Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.");
+    statusText.textContent = "Đang chờ tìm kiếm";
+    return;
+  }
+
+  const results = products
+    .map(item => ({
+      item,
+      score: Math.max(fuzzyScore(item.name, q), fuzzyScore(item.code, q))
+    }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map(x => x.item);
+
+  showSuggestions(results);
+  statusText.textContent = results.length ? "Có gợi ý phù hợp" : "Không tìm thấy gợi ý";
+}
+
+function triggerSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(searchAndSuggest, 120);
+}
+
+function loadData(showMessage = true) {
+  if (showMessage) {
+    statusText.textContent = "Đang tải dữ liệu...";
+    countBadge.textContent = "Đang tải...";
+  }
+
+  fetch(SHEET_URL + "&t=" + Date.now())
+    .then(res => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.text();
+    })
+    .then(text => {
+      const parsed = parseCsv(text);
+      products = parsed;
+      saveData(products);
+
+      countBadge.textContent = `${products.length} sản phẩm`;
+      statusText.textContent = "Đã cập nhật dữ liệu";
+
+      if (!lastSelected && products.length) {
+        renderProduct(products[0]);
       }
-
-      try{
-        setStatus("working");
-        const dpr = window.devicePixelRatio || 1;
-        const px = Math.floor(DISPLAY_SIZE * dpr);
-
-        const dataUrl = await QRCode.toDataURL(v, { width: px, margin: MARGIN });
-        currentDataUrl = dataUrl;
-
-        qr.innerHTML = "";
-        const img = document.createElement("img");
-        img.id = "qrImg";
-        img.src = dataUrl;
-        img.alt = "QR";
-        qr.appendChild(img);
-        attachLongPress(img);
-
-        setMsg("");
-        setStatus("ok");
-
-        if (shouldSave) pushHistory(v);
-      }catch(e){
-        console.error(e);
-        showEmptyQR();
-        setMsg("Lỗi");
-        setStatus("error");
+    })
+    .catch(() => {
+      const cached = loadSavedData();
+      if (cached.length) {
+        products = cached;
+        countBadge.textContent = `${products.length} sản phẩm`;
+        statusText.textContent = "Đang dùng dữ liệu đã lưu";
+        if (!lastSelected) renderProduct(products[0]);
+      } else {
+        countBadge.textContent = "Không tải được";
+        statusText.textContent = "Không kết nối được Google Sheet";
+        setEmptyState("Không tải được dữ liệu. Hãy kiểm tra link Google Sheet và mở bằng Safari để ổn định hơn.");
       }
+    });
+}
+
+fileInput.addEventListener("change", function () {
+  const file = this.files && this.files[0];
+  if (!file) return;
+
+  fileName.textContent = file.name;
+  statusText.textContent = "Đang đọc file CSV...";
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const parsed = parseCsv(e.target.result || "");
+    products = parsed;
+    saveData(products);
+
+    countBadge.textContent = `${products.length} sản phẩm`;
+    statusText.textContent = "Đã nạp file CSV";
+
+    if (products.length) {
+      renderProduct(products[0]);
+    } else {
+      setEmptyState("File CSV chưa có dữ liệu hợp lệ.");
     }
+  };
+  reader.readAsText(file, "UTF-8");
+});
 
-    // ===== Swipe giống iOS =====
-    function bindSwipe(){
-      let startX=0, startY=0;
-      let dragging=false;
-      let row=null;
+searchInput.addEventListener("input", triggerSearch);
+searchInput.addEventListener("keyup", triggerSearch);
+searchInput.addEventListener("change", triggerSearch);
 
-      function getX(el){
-        const main = el.querySelector(".rowMain");
-        const m = /translateX\(([-0-9.]+)px\)/.exec(main.style.transform || "");
-        return m ? parseFloat(m[1]) : (el.classList.contains("open") ? -REVEAL_X : 0);
-      }
+searchInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    searchAndSuggest();
+  }
+  if (e.key === "Escape") {
+    hideSuggestions();
+  }
+});
 
-      function setX(el, x, noAnim=false){
-        const main = el.querySelector(".rowMain");
-        main.style.transition = noAnim ? "none" : "";
-        main.style.transform = `translateX(${x}px)`;
-      }
+searchBtn.addEventListener("click", searchAndSuggest);
 
-      function resetInline(el){
-        const main = el.querySelector(".rowMain");
-        main.style.transition = "";
-        main.style.transform = "";
-      }
+clearBtn.addEventListener("click", function () {
+  searchInput.value = "";
+  searchInput.focus();
+  hideSuggestions();
+  statusText.textContent = "Đã xoá ô tìm";
+});
 
-      function onStart(e){
-        const main = e.target.closest(".rowMain");
-        if (!main) return;
+document.addEventListener("click", function (e) {
+  const inside = suggestionBox.contains(e.target) || searchInput.contains(e.target);
+  if (!inside) hideSuggestions();
+});
 
-        row = main.closest(".row");
-        if (!row) return;
+products = loadSavedData();
+if (products.length) {
+  countBadge.textContent = `${products.length} sản phẩm`;
+  statusText.textContent = "Đã nạp dữ liệu đã lưu";
+  renderProduct(products[0]);
+}
 
-        if (openRowEl && openRowEl !== row) closeOpenRow();
+loadData(true);
+setInterval(() => loadData(false), 15000);
 
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        dragging = false;
-
-        setX(row, row.classList.contains("open") ? -REVEAL_X : 0, true);
-      }
-
-      function onMove(e){
-        if (!row) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-
-        if (!dragging){
-          if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2){
-            dragging = true;
-            e.preventDefault();
-          } else {
-            return;
-          }
-        }
-
-        e.preventDefault();
-
-        const opened = row.classList.contains("open");
-        const base = opened ? -REVEAL_X : 0;
-        let x = base + dx;
-
-        if (x > 0) x = 0;
-        if (x < -REVEAL_X) x = -REVEAL_X;
-
-        setX(row, x, true);
-      }
-
-      function onEnd(){
-        if (!row) return;
-
-        const x = getX(row);
-        resetInline(row);
-
-        if (dragging){
-          if (x <= -OPEN_REVEAL_PX){
-            row.classList.add("open");
-            openRowEl = row;
-          } else {
-            row.classList.remove("open");
-            if (openRowEl === row) openRowEl = null;
-          }
-        }
-
-        dragging = false;
-        row = null;
-      }
-
-      hlist.addEventListener("touchstart", onStart, { passive:true });
-      hlist.addEventListener("touchmove", onMove, { passive:false });
-      hlist.addEventListener("touchend", onEnd, { passive:true });
-      hlist.addEventListener("touchcancel", onEnd, { passive:true });
-    }
-
-    // Click: delete / open
-    hlist.addEventListener("click", (e) => {
-      const del = e.target.closest('[data-action="delete"]');
-      if (del){
-        e.preventDefault(); e.stopPropagation();
-        deleteOne(Number(del.getAttribute("data-idx")));
-        return;
-      }
-
-      const main = e.target.closest('[data-action="open"]');
-      if (!main) return;
-
-      const row = main.closest(".row");
-      if (row && row.classList.contains("open")){
-        closeOpenRow();
-        return;
-      }
-
-      const idx = Number(main.getAttribute("data-idx"));
-      const it = history[idx];
-      if (!it) return;
-      t.value = it.value;
-      draw(it.value, false);
-    });
-
-    // Tap ra ngoài history để đóng row đang mở
-    document.addEventListener("click", (e) => {
-      if (!openRowEl) return;
-      if (!e.target.closest("#historyBox")) closeOpenRow();
-    });
-
-    // Buttons chính
-    document.getElementById('gen').addEventListener('click', () => { closeOpenRow(); draw(t.value, true); });
-    document.getElementById('clr').addEventListener('click', () => { closeOpenRow(); t.value = ""; draw("", false); setMsg(""); });
-    document.getElementById('paste').addEventListener('click', async () => {
-      try{
-        closeOpenRow();
-        setStatus("working");
-        if(!navigator.clipboard?.readText){
-          setMsg("No clipboard");
-          setStatus("error");
-          return;
-        }
-        const text = await navigator.clipboard.readText();
-        t.value = text || "";
-        draw(t.value, true);
-      }catch(e){
-        console.error(e);
-        setMsg("Clipboard error");
-        setStatus("error");
-      }
-    });
-
-    // ===== Xoá tất cả: xác nhận 2 bước =====
-    (function setupClearAllConfirm(){
-      const btn = document.getElementById("clearHistory");
-      let armed = false;
-      let timer = null;
-
-      const reset = () => {
-        armed = false;
-        btn.textContent = "Xoá tất cả";
-        btn.style.background = "rgba(255, 77, 79, .12)";
-        btn.style.borderColor = "rgba(255, 77, 79, .30)";
-        btn.style.color = "#b42318";
-        if (timer) { clearTimeout(timer); timer = null; }
-      };
-
-      document.addEventListener("click", (e) => {
-        if (!armed) return;
-        if (e.target === btn || btn.contains(e.target)) return;
-        reset();
-      });
-
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!armed){
-          armed = true;
-          btn.textContent = "Xác nhận";
-          btn.style.background = "#ff3b30";
-          btn.style.borderColor = "rgba(255,255,255,.35)";
-          btn.style.color = "#fff";
-          timer = setTimeout(reset, 3000);
-          return;
-        }
-
-        history = [];
-        saveHistory(history);
-        renderHistory();
-        closeOpenRow();
-
-        setMsg("Đã xoá tất cả");
-        setTimeout(()=>setMsg(""), 700);
-        setStatus("ready");
-        reset();
-      });
-    })();
-
-    // auto update khi gõ (không lưu lịch sử)
-    let typingTimer = null;
-    t.addEventListener('input', () => {
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => draw(t.value, false), 120);
-    });
-
-    // init
-    renderHistory();
-    bindSwipe();
-    draw("", false);
-    setStatus("ready");
-  </script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
 </body>
 </html>

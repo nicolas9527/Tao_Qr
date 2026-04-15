@@ -19,20 +19,15 @@
     :root{
       --bg1:#eaf3ff;
       --bg2:#f7fbff;
-      --card:#ffffff;
-      --card-soft:#f8fbff;
       --text:#0f172a;
       --muted:#64748b;
       --line:#dbe5f1;
       --primary:#3b82f6;
-      --primary-2:#2563eb;
       --primary-3:#1d4ed8;
       --danger:#ef4444;
-      --success:#16a34a;
       --shadow: 0 18px 44px rgba(37, 99, 235, .10);
       --shadow-strong: 0 22px 50px rgba(37, 99, 235, .16);
-      --radius: 24px;
-      --radius-sm: 18px;
+      --radius: 26px;
     }
 
     * { box-sizing: border-box; }
@@ -60,8 +55,8 @@
     }
 
     .hero{
+      margin: 10px 6px 14px;
       color:#0f172a;
-      margin: 10px 6px 16px;
     }
 
     .hero h1{
@@ -91,56 +86,106 @@
       backdrop-filter: blur(12px);
     }
 
-    .top{
-      padding: 18px;
+    .tabsWrap{
+      padding: 18px 18px 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.96));
+    }
+
+    .segmented{
+      position: relative;
       display: grid;
-      gap: 14px;
+      grid-template-columns: 1fr 1fr;
+      padding: 6px;
+      border-radius: 22px;
+      background: rgba(239,246,255,.95);
+      border: 1px solid #d6e6ff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 10px 20px rgba(59,130,246,.06);
+      overflow: hidden;
     }
 
-    .grid{
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 1fr;
-    }
-
-    .fileRow{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap: wrap;
-    }
-
-    input[type=file]{ display:none; }
-
-    .fileBtn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      padding: 13px 16px;
+    .segmentedIndicator{
+      position:absolute;
+      top: 6px;
+      left: 6px;
+      width: calc(50% - 6px);
+      height: calc(100% - 12px);
       border-radius: 16px;
       background: linear-gradient(180deg, var(--primary), var(--primary-3));
-      color:#fff;
-      font-weight:800;
-      font-size:15px;
-      cursor:pointer;
-      box-shadow: 0 12px 24px rgba(59,130,246,.22);
-      user-select:none;
-      min-width: 146px;
-      border: 1px solid rgba(255,255,255,.28);
+      box-shadow: 0 10px 18px rgba(59,130,246,.22);
+      transform: translateX(0);
+      transition: transform .26s cubic-bezier(.2,.9,.2,1);
+      pointer-events: none;
     }
 
-    .fileName{
+    .segBtn{
+      position: relative;
+      z-index: 1;
+      border:none;
+      background: transparent;
+      border-radius: 16px;
+      height: 48px;
+      cursor:pointer;
+      color:#1d4ed8;
+      font-weight:900;
+      font-size:15px;
+      transition: color .22s ease;
+    }
+
+    .segBtn.active{
+      color:#fff;
+    }
+
+    .content{
+      display:block;
+    }
+
+    .tabPanel{
+      display:none;
+      padding: 18px;
+    }
+
+    .tabPanel.active{
+      display:block;
+    }
+
+    .panelHeader{
+      margin-bottom: 14px;
+      display:grid;
+      gap: 4px;
+    }
+
+    .panelHeader h2{
+      margin:0;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color:#0f172a;
+      font-weight: 900;
+    }
+
+    .panelHeader p{
+      margin:0;
       color: var(--muted);
       font-size: 14px;
-      min-width: 180px;
-      flex:1;
-      line-height: 1.4;
+      line-height: 1.55;
     }
 
-    .searchRow{
+    .panelGrid{
+      display:grid;
+      gap:16px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.98));
+      border:1px solid var(--line);
+      border-radius: 26px;
+      padding:18px;
+      box-shadow: var(--shadow);
+    }
+
+    .searchBox{
+      position:relative;
       display:flex;
       gap:10px;
       align-items:flex-start;
@@ -186,6 +231,18 @@
       font-weight:900;
       cursor:pointer;
       box-shadow: 0 10px 18px rgba(239,68,68,.18);
+      display:none;
+      opacity:0;
+      transition: opacity .15s ease, transform .15s ease;
+    }
+
+    .clearBtn.show{
+      display:block;
+      opacity:1;
+    }
+
+    .clearBtn:active{
+      transform:translateY(-50%) scale(.96);
     }
 
     .searchBtn{
@@ -202,29 +259,6 @@
       box-shadow: 0 12px 24px rgba(59,130,246,.20);
       flex:0 0 auto;
       border: 1px solid rgba(255,255,255,.28);
-    }
-
-    .meta{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 9px 12px;
-      border-radius:999px;
-      background: linear-gradient(180deg, #eff6ff, #e0ecff);
-      color:#1d4ed8;
-      font-weight:800;
-      border:1px solid #cfe0ff;
-      box-shadow: 0 8px 18px rgba(59,130,246,.10);
     }
 
     .suggestionBox{
@@ -285,23 +319,9 @@
       color:var(--muted);
     }
 
-    .content{
+    .detailCard{
       display:grid;
-      grid-template-columns: 1fr;
-    }
-
-    .right{
-      padding: 18px;
-      display:grid;
-      gap:16px;
-    }
-
-    .resultCard{
-      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.98));
-      border:1px solid var(--line);
-      border-radius: 26px;
-      padding:18px;
-      box-shadow: var(--shadow);
+      gap: 12px;
     }
 
     .productName{
@@ -314,7 +334,6 @@
     }
 
     .detailActions{
-      margin-top:12px;
       display:flex;
       align-items:center;
       gap:10px;
@@ -332,6 +351,7 @@
       color:#1d4ed8;
       font-weight:900;
       font-size:14px;
+      max-width: 100%;
     }
 
     .codeText{
@@ -354,6 +374,12 @@
 
     .copyBtn:active{
       transform: translateY(1px);
+    }
+
+    .empty{
+      color:#64748b;
+      font-size:15px;
+      line-height:1.65;
     }
 
     .blockLabel{
@@ -394,7 +420,7 @@
       text-rendering: geometricPrecision;
     }
 
-    #qrcode{
+    #qrcode, #liveQr{
       display:grid;
       place-items:center;
       width:100%;
@@ -408,10 +434,17 @@
       padding: 10px 0;
     }
 
-    .empty{
-      color:#64748b;
-      font-size:15px;
-      line-height:1.65;
+    .generatorTitle{
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .generatorGrid{
+      display:grid;
+      gap:16px;
     }
 
     .footer{
@@ -426,6 +459,35 @@
       background: rgba(255,255,255,.98);
     }
 
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(15, 23, 42, .95);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .01em;
+      box-shadow: 0 18px 34px rgba(0,0,0,.20);
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      max-width: calc(100vw - 28px);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     .preload{
       position:absolute;
       left:-99999px;
@@ -438,8 +500,23 @@
     }
 
     @media (min-width: 860px){
-      .grid{
-        grid-template-columns: 1fr 1.5fr;
+      .panelGrid.searchGrid{
+        grid-template-columns: 1.1fr .9fr;
+        align-items:start;
+      }
+
+      .generatorGrid{
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 859px){
+      .searchBox{
+        flex-direction: column;
+      }
+
+      .searchBtn{
+        width: 100%;
       }
     }
 
@@ -450,7 +527,6 @@
         --text:#e2e8f0;
         --muted:#94a3b8;
         --line:#1f2a3d;
-        --card:#0b1220;
       }
 
       body{
@@ -465,7 +541,11 @@
         border-color: rgba(255,255,255,.08);
       }
 
-      .top, .right, .resultCard, .box, .footer{
+      .tabsWrap{
+        background: rgba(10,16,30,.96);
+      }
+
+      .card, .footer{
         background: rgba(10,16,30,.96);
       }
 
@@ -481,7 +561,10 @@
         color:#cbd5e1;
       }
 
-      .productName, .suggestionName{
+      .panelHeader h2,
+      .productName,
+      .suggestionName,
+      .generatorTitle{
         color:#f8fafc;
       }
 
@@ -491,14 +574,23 @@
         border-color:#20304b;
       }
 
-      .fileName, .meta, .blockLabel, .empty, .footer, .suggestionCode, .visualLoading{
+      .empty, .footer, .suggestionCode, .visualLoading, .panelHeader p, .blockLabel{
         color:#94a3b8;
       }
 
-      .badge, .productCode{
+      .productCode{
         background: linear-gradient(180deg, rgba(59,130,246,.16), rgba(37,99,235,.12));
         color:#bfdbfe;
         border-color: rgba(59,130,246,.22);
+      }
+
+      .segmented{
+        background:#0b1220;
+        border-color:#20304b;
+      }
+
+      .segBtn{
+        color:#bfdbfe;
       }
 
       .suggestionBox{
@@ -522,23 +614,18 @@
       }
 
       .searchBtn,
-      .fileBtn,
       .copyBtn{
         box-shadow: 0 12px 24px rgba(37,99,235,.24);
       }
-    }
 
-    .generatorTitle{
-      margin: 0 0 12px;
-      font-size: 18px;
-      font-weight: 900;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-    }
+      .box{
+        background:#0b1220;
+        border-color:#20304b;
+      }
 
-    .generatorGrid{
-      display:grid;
-      gap:16px;
+      .toast{
+        background: rgba(2, 6, 23, .96);
+      }
     }
   </style>
 </head>
@@ -546,71 +633,87 @@
 <div class="app">
   <div class="hero">
     <h1>🔍 Product Finder Pro</h1>
-    <p>Tra cứu nhanh từ Google Sheet, gợi ý theo tên hoặc mã, tự cập nhật theo lịch và hiển thị barcode + QR ngay trên iPhone.</p>
+    <p>Tra cứu nhanh từ Google Sheet, gợi ý theo tên hoặc mã, và tạo QR/barcode ngay trên iPhone với giao diện gọn, mịn, dễ dùng.</p>
   </div>
 
   <div class="shell">
-    <div class="top">
-      <div class="grid">
-        <div class="fileRow">
-          <label class="fileBtn" for="fileInput">📂 Chọn CSV</label>
-          <input type="file" id="fileInput" accept=".csv" />
-          <div class="fileName" id="fileName">Đang dùng dữ liệu Google Sheet</div>
-        </div>
-
-        <div class="searchRow">
-          <div class="searchWrap">
-            <input id="search" class="search" placeholder="Tìm tên hoặc mã..." autocomplete="off" />
-            <button class="clearBtn" id="clearBtn" type="button">×</button>
-
-            <div class="suggestionBox" id="suggestionBox">
-              <div class="suggestionHead">Gợi ý</div>
-              <div class="suggestionList" id="suggestionList"></div>
-            </div>
-          </div>
-
-          <button class="searchBtn" id="searchBtn" type="button">Tìm</button>
-        </div>
-      </div>
-
-      <div class="meta">
-        <div class="badge" id="countBadge">Đang tải dữ liệu...</div>
-        <div id="statusText">Tự cập nhật từ Google Sheet</div>
+    <div class="tabsWrap">
+      <div class="segmented" role="tablist" aria-label="Chức năng">
+        <div class="segmentedIndicator" id="tabIndicator"></div>
+        <button class="segBtn active" id="tabSearchBtn" type="button" role="tab" aria-selected="true" aria-controls="panelSearch">Tra cứu</button>
+        <button class="segBtn" id="tabGeneratorBtn" type="button" role="tab" aria-selected="false" aria-controls="panelGenerator">Tạo mã</button>
       </div>
     </div>
 
     <div class="content">
-      <section class="right">
-        <div class="resultCard" id="detailCard">
-          <div class="empty">Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.</div>
+      <section class="tabPanel active" id="panelSearch" role="tabpanel" aria-labelledby="tabSearchBtn">
+        <div class="panelHeader">
+          <h2>Tra cứu sản phẩm</h2>
+          <p>Nhập tên hoặc mã để xem kết quả, barcode và QR ở ngay bên dưới.</p>
         </div>
 
-        <div>
-          <div class="blockLabel">Barcode</div>
-          <div class="box">
-            <div id="barcode"></div>
+        <div class="panelGrid searchGrid">
+          <div class="panelGrid">
+            <div class="card">
+              <div class="searchBox">
+                <div class="searchWrap">
+                  <input id="search" class="search" placeholder="Tìm tên hoặc mã..." autocomplete="off" />
+                  <button class="clearBtn" id="clearBtn" type="button">×</button>
+
+                  <div class="suggestionBox" id="suggestionBox">
+                    <div class="suggestionHead">Gợi ý</div>
+                    <div class="suggestionList" id="suggestionList"></div>
+                  </div>
+                </div>
+
+                <button class="searchBtn" id="searchBtn" type="button">Tìm</button>
+              </div>
+            </div>
+
+            <div class="card detailCard" id="detailCard">
+              <div class="empty">Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.</div>
+            </div>
+          </div>
+
+          <div class="searchVisuals">
+            <div>
+              <div class="blockLabel">Barcode</div>
+              <div class="box">
+                <div id="barcode"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="blockLabel">QR Code</div>
+              <div class="box">
+                <div id="qrcode"></div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div>
-          <div class="blockLabel">QR Code</div>
-          <div class="box">
-            <div id="qrcode"></div>
-          </div>
+      <section class="tabPanel" id="panelGenerator" role="tabpanel" aria-labelledby="tabGeneratorBtn">
+        <div class="panelHeader">
+          <h2>Tạo mã từ nội dung</h2>
+          <p>Nhập bất kỳ nội dung nào để tạo QR. Nếu nội dung là số hợp lệ, barcode cũng sẽ được tạo.</p>
         </div>
 
-        <div class="resultCard">
-          <div class="generatorTitle">Tạo mã từ nội dung</div>
+        <div class="panelGrid">
+          <div class="card">
+            <div class="searchBox">
+              <div class="searchWrap">
+                <input id="liveInput" class="search" placeholder="Nhập nội dung..." autocomplete="off" />
+                <button class="clearBtn" id="liveClearBtn" type="button">×</button>
+              </div>
+              <button class="searchBtn" id="liveCopyBtn" type="button">Copy nội dung</button>
+            </div>
 
-          <div class="searchWrap" style="margin-bottom:12px;">
-            <input id="liveInput" class="search" placeholder="Nhập nội dung..." autocomplete="off" />
-            <button class="clearBtn" id="liveClearBtn" type="button">×</button>
-          </div>
-
-          <div class="detailActions" style="margin-bottom:12px;">
-            <div class="productCode">
-              <span>Trạng thái:</span>
-              <span id="liveStatus" class="codeText">Chờ nhập nội dung</span>
+            <div class="detailActions" style="margin-top:14px;">
+              <div class="productCode">
+                <span>Trạng thái:</span>
+                <span id="liveStatus" class="codeText">Chờ nhập nội dung</span>
+              </div>
             </div>
           </div>
 
@@ -635,18 +738,20 @@
 
     <div class="footer">
       <div>Chạy tốt nhất trên Safari.</div>
-      <div>Dữ liệu chỉ cần cập nhật trong Google Sheet.</div>
+      <div>Dữ liệu tự cập nhật từ Google Sheet.</div>
     </div>
   </div>
 </div>
 
 <div id="preload" class="preload" aria-hidden="true"></div>
+<div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRW5XFMMvgun4D_XFvztStaxIvY_MgaxCmoZofYapLDRkE6EloODQix5rPYXoF2Rl4NjkjZgBWoBsPf/pub?gid=0&single=true&output=csv";
 const CACHE_KEY = "productsData";
 const CACHE_VERSION_KEY = "productsDataVersion";
 const REFRESH_INTERVAL_MS = 60000;
+const ACTIVE_TAB_KEY = "pfpActiveTab";
 
 let products = [];
 let fuse = null;
@@ -654,30 +759,36 @@ let searchTimer = null;
 let lastSelected = null;
 let statusResetTimer = null;
 let preloadTimer = null;
+let liveTimer = null;
+let toastTimer = null;
 
 const visualCache = new Map();
 const visualPromises = new Map();
 
-const fileInput = document.getElementById("fileInput");
-const fileName = document.getElementById("fileName");
 const searchInput = document.getElementById("search");
 const clearBtn = document.getElementById("clearBtn");
 const searchBtn = document.getElementById("searchBtn");
 const suggestionBox = document.getElementById("suggestionBox");
 const suggestionList = document.getElementById("suggestionList");
 const detailCard = document.getElementById("detailCard");
-const countBadge = document.getElementById("countBadge");
-const statusText = document.getElementById("statusText");
+const countBadge = null;
+const statusText = null;
 const barcodeContainer = document.getElementById("barcode");
 const qrEl = document.getElementById("qrcode");
+const toastEl = document.getElementById("toast");
 
 const liveInput = document.getElementById("liveInput");
 const liveClearBtn = document.getElementById("liveClearBtn");
 const liveStatus = document.getElementById("liveStatus");
 const liveQr = document.getElementById("liveQr");
 const liveBarcode = document.getElementById("liveBarcode");
+const liveCopyBtn = document.getElementById("liveCopyBtn");
 
-let liveTimer = null;
+const tabSearchBtn = document.getElementById("tabSearchBtn");
+const tabGeneratorBtn = document.getElementById("tabGeneratorBtn");
+const tabIndicator = document.getElementById("tabIndicator");
+const panelSearch = document.getElementById("panelSearch");
+const panelGenerator = document.getElementById("panelGenerator");
 
 function normalizeText(str) {
   return (str || "")
@@ -815,20 +926,22 @@ function saveVersion(version) {
   } catch {}
 }
 
-function setStatus(message, transient = false) {
-  statusText.textContent = message;
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add("show");
 
-  if (statusResetTimer) clearTimeout(statusResetTimer);
-  if (transient) {
-    statusResetTimer = setTimeout(() => {
-      if (lastSelected) {
-        statusText.textContent = "Đã chọn sản phẩm";
-      } else if (products.length) {
-        statusText.textContent = "Đã cập nhật dữ liệu";
-      } else {
-        statusText.textContent = "Tự cập nhật từ Google Sheet";
-      }
-    }, 1400);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, 1700);
+}
+
+function updateClearButton(inputEl, buttonEl) {
+  if (!inputEl || !buttonEl) return;
+  if (inputEl.value.trim()) {
+    buttonEl.classList.add("show");
+  } else {
+    buttonEl.classList.remove("show");
   }
 }
 
@@ -946,10 +1059,7 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF"
-      }
+      color: { dark: "#000000", light: "#FFFFFF" }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1029,7 +1139,8 @@ async function copyText(text) {
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(value);
-      setStatus("Đã sao chép mã", true);
+      showToast("Đã sao chép nội dung ✅");
+      if (navigator.vibrate) navigator.vibrate(50);
       return;
     }
   } catch {}
@@ -1045,9 +1156,10 @@ async function copyText(text) {
     ta.select();
     document.execCommand("copy");
     document.body.removeChild(ta);
-    setStatus("Đã sao chép mã", true);
+    showToast("Đã sao chép nội dung ✅");
+    if (navigator.vibrate) navigator.vibrate(50);
   } catch {
-    setStatus("Không thể sao chép mã", true);
+    showToast("Không thể sao chép");
   }
 }
 
@@ -1144,9 +1256,9 @@ function showSuggestions(results) {
     `;
     row.addEventListener("click", async () => {
       searchInput.value = "";
+      updateClearButton(searchInput, clearBtn);
       hideSuggestions();
       await renderProduct(item);
-      setStatus("Đã chọn sản phẩm");
       searchInput.blur();
     });
     suggestionList.appendChild(row);
@@ -1204,16 +1316,16 @@ function searchAndSuggest() {
   const qRaw = searchInput.value.trim();
   const q = normalizeText(qRaw);
 
+  updateClearButton(searchInput, clearBtn);
+
   if (!q) {
     hideSuggestions();
     if (!lastSelected) setEmptyState("Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.");
-    setStatus("Đang chờ tìm kiếm");
     return;
   }
 
   const results = searchProducts(qRaw);
   showSuggestions(results);
-  setStatus(results.length ? "Có gợi ý phù hợp" : "Không tìm thấy gợi ý");
 }
 
 function triggerSearch() {
@@ -1241,12 +1353,7 @@ function findProductByCode(code) {
   return products.find(item => String(item.code || "") === target) || null;
 }
 
-function loadData(showMessage = true) {
-  if (showMessage) {
-    setStatus("Đang tải dữ liệu...");
-    countBadge.textContent = "Đang tải...";
-  }
-
+function loadData() {
   fetch(SHEET_URL + "&t=" + Date.now())
     .then(res => {
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1257,8 +1364,6 @@ function loadData(showMessage = true) {
       const savedVersion = loadSavedVersion();
 
       if (version === savedVersion && products.length) {
-        countBadge.textContent = `${products.length} sản phẩm`;
-        setStatus("Dữ liệu không đổi");
         schedulePreload(products.slice(0, 5));
         return;
       }
@@ -1269,17 +1374,11 @@ function loadData(showMessage = true) {
       saveVersion(version);
       buildFuseIndex(products);
 
-      countBadge.textContent = `${products.length} sản phẩm`;
-      setStatus("Đã cập nhật dữ liệu");
-
       if (products.length) {
         if (lastSelected) {
           const refreshed = findProductByCode(lastSelected.code);
-          if (refreshed) {
-            renderProduct(refreshed);
-          } else {
-            renderProduct(products[0]);
-          }
+          if (refreshed) renderProduct(refreshed);
+          else renderProduct(products[0]);
         } else {
           renderProduct(products[0]);
         }
@@ -1294,8 +1393,6 @@ function loadData(showMessage = true) {
       if (cached.length) {
         products = cached;
         buildFuseIndex(products);
-        countBadge.textContent = `${products.length} sản phẩm`;
-        setStatus("Đang dùng dữ liệu đã lưu");
 
         if (!lastSelected) {
           renderProduct(products[0]);
@@ -1306,46 +1403,62 @@ function loadData(showMessage = true) {
 
         schedulePreload(products.slice(0, 5));
       } else {
-        countBadge.textContent = "Không tải được";
-        setStatus("Không kết nối được Google Sheet");
         setEmptyState("Không tải được dữ liệu. Hãy kiểm tra link Google Sheet và mở bằng Safari để ổn định hơn.");
       }
     });
 }
 
-fileInput.addEventListener("change", function () {
-  const file = this.files && this.files[0];
-  if (!file) return;
+function updateSegmentedIndicator(isSearch) {
+  if (!tabIndicator) return;
+  tabIndicator.style.transform = isSearch
+    ? "translateX(0)"
+    : "translateX(calc(100% + 6px))";
+}
 
-  fileName.textContent = file.name;
-  setStatus("Đang đọc file CSV...");
+function setActiveTab(tabName) {
+  const isSearch = tabName === "search";
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const raw = e.target.result || "";
-    const parsed = parseCsv(raw);
-    products = parsed;
-    buildFuseIndex(products);
-    saveData(products);
-    saveVersion(simpleHash(raw));
+  tabSearchBtn.classList.toggle("active", isSearch);
+  tabGeneratorBtn.classList.toggle("active", !isSearch);
 
-    countBadge.textContent = `${products.length} sản phẩm`;
-    setStatus("Đã nạp file CSV");
+  tabSearchBtn.setAttribute("aria-selected", String(isSearch));
+  tabGeneratorBtn.setAttribute("aria-selected", String(!isSearch));
 
-    if (products.length) {
-      renderProduct(products[0]);
-    } else {
-      setEmptyState("File CSV chưa có dữ liệu hợp lệ.");
-    }
+  panelSearch.classList.toggle("active", isSearch);
+  panelGenerator.classList.toggle("active", !isSearch);
 
-    schedulePreload(products.slice(0, 5));
-  };
-  reader.readAsText(file, "UTF-8");
+  updateSegmentedIndicator(isSearch);
+  localStorage.setItem(ACTIVE_TAB_KEY, tabName);
+  hideSuggestions();
+
+  if (isSearch) {
+    setTimeout(() => {
+      try { searchInput.focus({ preventScroll: true }); } catch { searchInput.focus(); }
+    }, 50);
+  } else {
+    setTimeout(() => {
+      try { liveInput.focus({ preventScroll: true }); } catch { liveInput.focus(); }
+    }, 50);
+  }
+}
+
+tabSearchBtn.addEventListener("click", () => setActiveTab("search"));
+tabGeneratorBtn.addEventListener("click", () => setActiveTab("generator"));
+
+searchInput.addEventListener("input", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
 });
 
-searchInput.addEventListener("input", triggerSearch);
-searchInput.addEventListener("keyup", triggerSearch);
-searchInput.addEventListener("change", triggerSearch);
+searchInput.addEventListener("keyup", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
+});
+
+searchInput.addEventListener("change", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
+});
 
 searchInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
@@ -1354,7 +1467,6 @@ searchInput.addEventListener("keydown", function (e) {
     if (results.length === 1) {
       hideSuggestions();
       renderProduct(results[0]);
-      setStatus("Đã chọn sản phẩm");
       searchInput.blur();
       return;
     }
@@ -1369,23 +1481,15 @@ searchBtn.addEventListener("click", searchAndSuggest);
 
 clearBtn.addEventListener("click", function () {
   searchInput.value = "";
+  updateClearButton(searchInput, clearBtn);
   searchInput.focus();
   hideSuggestions();
-  setStatus("Đã xoá ô tìm");
 });
 
 document.addEventListener("click", function (e) {
-  const inside = suggestionBox.contains(e.target) || searchInput.contains(e.target);
+  const inside = suggestionBox.contains(e.target) || searchInput.contains(e.target) || searchBtn.contains(e.target) || clearBtn.contains(e.target);
   if (!inside) hideSuggestions();
 });
-
-function tryFocusSearch() {
-  try {
-    searchInput.focus({ preventScroll: true });
-  } catch {
-    searchInput.focus();
-  }
-}
 
 function renderLiveQR(text) {
   liveQr.innerHTML = `<div class="visualLoading">Đang tạo QR...</div>`;
@@ -1421,6 +1525,7 @@ function updateLiveGenerator() {
   clearTimeout(liveTimer);
   liveTimer = setTimeout(async () => {
     const text = liveInput.value.trim();
+    updateClearButton(liveInput, liveClearBtn);
 
     if (!text) {
       liveStatus.textContent = "Chờ nhập nội dung";
@@ -1473,31 +1578,48 @@ function updateLiveGenerator() {
   }, 120);
 }
 
-liveInput.addEventListener("input", updateLiveGenerator);
+liveInput.addEventListener("input", function () {
+  updateClearButton(liveInput, liveClearBtn);
+  updateLiveGenerator();
+});
 
 liveClearBtn.addEventListener("click", () => {
   liveInput.value = "";
+  updateClearButton(liveInput, liveClearBtn);
   liveInput.focus();
   liveStatus.textContent = "Chờ nhập nội dung";
   liveQr.innerHTML = "";
   liveBarcode.innerHTML = "";
 });
 
+liveCopyBtn.addEventListener("click", () => {
+  const text = liveInput.value.trim();
+  if (!text) {
+    showToast("Chưa có nội dung để copy");
+    return;
+  }
+  copyText(text);
+});
+
 products = loadSavedData();
 buildFuseIndex(products);
 
 if (products.length) {
-  countBadge.textContent = `${products.length} sản phẩm`;
-  setStatus("Đã nạp dữ liệu đã lưu");
   renderProduct(products[0]);
   schedulePreload(products.slice(0, 5));
 }
 
-loadData(true);
+updateClearButton(searchInput, clearBtn);
+updateClearButton(liveInput, liveClearBtn);
+
+const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";
+setActiveTab(savedTab === "generator" ? "generator" : "search");
+
+loadData();
 
 setInterval(() => {
   if (document.visibilityState === "visible") {
-    loadData(false);
+    loadData();
   }
 }, REFRESH_INTERVAL_MS);
 
@@ -1507,11 +1629,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-window.addEventListener("load", () => {
-  setTimeout(tryFocusSearch, 350);
-});
-
-/* Chặn zoom */
 document.addEventListener("gesturestart", function (e) {
   e.preventDefault();
 });

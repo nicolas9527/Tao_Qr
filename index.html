@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="icon.PNG" />
   <title>Product Finder Pro</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode/dist/JsBarcode.all.min.js"></script>
 
@@ -312,10 +313,18 @@
       color:#0f172a;
     }
 
+    .detailActions{
+      margin-top:12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
     .productCode{
       display:inline-flex;
       align-items:center;
-      margin-top:12px;
+      gap:8px;
       padding: 9px 14px;
       border-radius:999px;
       background: linear-gradient(180deg, #eff6ff, #e0ecff);
@@ -323,6 +332,28 @@
       color:#1d4ed8;
       font-weight:900;
       font-size:14px;
+    }
+
+    .codeText{
+      display:inline-block;
+      word-break: break-all;
+    }
+
+    .copyBtn{
+      border:none;
+      border-radius:999px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, var(--primary), var(--primary-3));
+      color:#fff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(59,130,246,.18);
+      border: 1px solid rgba(255,255,255,.28);
+    }
+
+    .copyBtn:active{
+      transform: translateY(1px);
     }
 
     .blockLabel{
@@ -339,13 +370,24 @@
       border:1px solid var(--line);
       border-radius:22px;
       padding:14px;
-      overflow-x:auto;
+      overflow:hidden;
       -webkit-overflow-scrolling: touch;
       box-shadow: 0 10px 18px rgba(15,23,42,.04);
+      min-height: 132px;
+      display:grid;
+      place-items:center;
     }
 
     #barcode{
       width:100%;
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
+
+    #barcode svg{
+      width:100%;
+      max-width:100%;
       height:auto;
       display:block;
       shape-rendering: crispEdges;
@@ -355,6 +397,15 @@
     #qrcode{
       display:grid;
       place-items:center;
+      width:100%;
+    }
+
+    .visualLoading{
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      text-align:center;
+      padding: 10px 0;
     }
 
     .empty{
@@ -373,6 +424,17 @@
       gap:10px;
       flex-wrap:wrap;
       background: rgba(255,255,255,.98);
+    }
+
+    .preload{
+      position:absolute;
+      left:-99999px;
+      top:-99999px;
+      width:1px;
+      height:1px;
+      overflow:hidden;
+      opacity:0;
+      pointer-events:none;
     }
 
     @media (min-width: 860px){
@@ -429,7 +491,7 @@
         border-color:#20304b;
       }
 
-      .fileName, .meta, .blockLabel, .empty, .footer, .suggestionCode{
+      .fileName, .meta, .blockLabel, .empty, .footer, .suggestionCode, .visualLoading{
         color:#94a3b8;
       }
 
@@ -460,7 +522,8 @@
       }
 
       .searchBtn,
-      .fileBtn{
+      .fileBtn,
+      .copyBtn{
         box-shadow: 0 12px 24px rgba(37,99,235,.24);
       }
     }
@@ -512,7 +575,7 @@
         <div>
           <div class="blockLabel">Barcode</div>
           <div class="box">
-            <svg id="barcode"></svg>
+            <div id="barcode"></div>
           </div>
         </div>
 
@@ -532,12 +595,23 @@
   </div>
 </div>
 
+<div id="preload" class="preload" aria-hidden="true"></div>
+
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRW5XFMMvgun4D_XFvztStaxIvY_MgaxCmoZofYapLDRkE6EloODQix5rPYXoF2Rl4NjkjZgBWoBsPf/pub?gid=0&single=true&output=csv";
+const CACHE_KEY = "productsData";
+const CACHE_VERSION_KEY = "productsDataVersion";
+const REFRESH_INTERVAL_MS = 60000;
 
 let products = [];
+let fuse = null;
 let searchTimer = null;
 let lastSelected = null;
+let statusResetTimer = null;
+let preloadTimer = null;
+
+const visualCache = new Map();
+const visualPromises = new Map();
 
 const fileInput = document.getElementById("fileInput");
 const fileName = document.getElementById("fileName");
@@ -549,7 +623,7 @@ const suggestionList = document.getElementById("suggestionList");
 const detailCard = document.getElementById("detailCard");
 const countBadge = document.getElementById("countBadge");
 const statusText = document.getElementById("statusText");
-const barcodeEl = document.getElementById("barcode");
+const barcodeContainer = document.getElementById("barcode");
 const qrEl = document.getElementById("qrcode");
 
 function normalizeText(str) {
@@ -568,6 +642,15 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function simpleHash(str) {
+  let hash = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16);
 }
 
 function parseCsvLine(line) {
@@ -609,7 +692,8 @@ function parseCsv(text) {
     normalizedFirst.includes("codecontent") ||
     normalizedFirst.includes("ma_sp") ||
     normalizedFirst.includes("code") ||
-    normalizedFirst.includes("barcode");
+    normalizedFirst.includes("barcode") ||
+    normalizedFirst.includes("sku");
 
   let nameIndex = 0;
   let codeIndex = 1;
@@ -640,7 +724,8 @@ function parseCsv(text) {
         name: cleanName,
         code: cleanCode,
         kName: normalizeText(cleanName),
-        kCode: normalizeText(cleanCode)
+        kCode: normalizeText(cleanCode),
+        searchText: normalizeText(cleanName + " " + cleanCode)
       });
     }
   }
@@ -650,7 +735,7 @@ function parseCsv(text) {
 
 function loadSavedData() {
   try {
-    const raw = localStorage.getItem("productsData");
+    const raw = localStorage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -659,47 +744,331 @@ function loadSavedData() {
 
 function saveData(data) {
   try {
-    localStorage.setItem("productsData", JSON.stringify(data));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
   } catch {}
+}
+
+function loadSavedVersion() {
+  try {
+    return localStorage.getItem(CACHE_VERSION_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveVersion(version) {
+  try {
+    localStorage.setItem(CACHE_VERSION_KEY, version);
+  } catch {}
+}
+
+function setStatus(message, transient = false) {
+  statusText.textContent = message;
+
+  if (statusResetTimer) clearTimeout(statusResetTimer);
+  if (transient) {
+    statusResetTimer = setTimeout(() => {
+      if (lastSelected) {
+        statusText.textContent = "Đã chọn sản phẩm";
+      } else if (products.length) {
+        statusText.textContent = "Đã cập nhật dữ liệu";
+      } else {
+        statusText.textContent = "Tự cập nhật từ Google Sheet";
+      }
+    }, 1400);
+  }
 }
 
 function setEmptyState(message) {
   detailCard.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
   qrEl.innerHTML = "";
-  barcodeEl.innerHTML = "";
+  barcodeContainer.innerHTML = "";
 }
 
-function renderProduct(item) {
+function detectBarcodeFormat(code) {
+  const value = String(code || "").trim();
+  if (!/^\d+$/.test(value)) return "CODE128";
+
+  const isValidEAN13 = (s) => {
+    if (s.length !== 13) return false;
+    const digits = s.split("").map(Number);
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += digits[i] * (i % 2 === 0 ? 1 : 3);
+    }
+    const calc = (10 - (sum % 10)) % 10;
+    return calc === digits[12];
+  };
+
+  const isValidEAN8 = (s) => {
+    if (s.length !== 8) return false;
+    const digits = s.split("").map(Number);
+    let sum = 0;
+    for (let i = 0; i < 7; i++) {
+      sum += digits[i] * (i % 2 === 0 ? 3 : 1);
+    }
+    const calc = (10 - (sum % 10)) % 10;
+    return calc === digits[7];
+  };
+
+  const isValidUPC = (s) => {
+    if (s.length !== 12) return false;
+    const digits = s.split("").map(Number);
+    let sum = 0;
+    for (let i = 0; i < 11; i++) {
+      sum += digits[i] * (i % 2 === 0 ? 3 : 1);
+    }
+    const calc = (10 - (sum % 10)) % 10;
+    return calc === digits[11];
+  };
+
+  const isValidITF14 = (s) => {
+    if (s.length !== 14) return false;
+    const digits = s.split("").map(Number);
+    let sum = 0;
+    for (let i = 0; i < 13; i++) {
+      sum += digits[12 - i] * (i % 2 === 0 ? 3 : 1);
+    }
+    const calc = (10 - (sum % 10)) % 10;
+    return calc === digits[13];
+  };
+
+  if (value.length === 13 && isValidEAN13(value)) return "EAN13";
+  if (value.length === 8 && isValidEAN8(value)) return "EAN8";
+  if (value.length === 12 && isValidUPC(value)) return "UPC";
+  if (value.length === 14 && isValidITF14(value)) return "ITF14";
+  return "CODE128";
+}
+
+function renderBarcode(code) {
+  const format = detectBarcodeFormat(code);
+
+  barcodeContainer.innerHTML = "";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+  try {
+    JsBarcode(svg, code, {
+      format,
+      lineColor: "#0f172a",
+      background: "#ffffff",
+      width: code.length >= 13 ? 1.55 : 1.95,
+      height: 94,
+      margin: 8,
+      displayValue: true,
+      fontSize: 14,
+      textMargin: 4,
+      textAlign: "center",
+      font: "Arial"
+    });
+  } catch {
+    try {
+      JsBarcode(svg, code, {
+        format: "CODE128",
+        lineColor: "#0f172a",
+        background: "#ffffff",
+        width: 1.8,
+        height: 90,
+        margin: 8,
+        displayValue: true,
+        fontSize: 14,
+        textMargin: 4,
+        textAlign: "center",
+        font: "Arial"
+      });
+    } catch {
+      barcodeContainer.innerHTML = `<div class="visualLoading">Không tạo được barcode</div>`;
+      return;
+    }
+  }
+
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "auto");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.style.width = "100%";
+  svg.style.maxWidth = "100%";
+  svg.style.height = "auto";
+  svg.style.display = "block";
+  svg.style.shapeRendering = "crispEdges";
+  svg.style.textRendering = "geometricPrecision";
+
+  barcodeContainer.appendChild(svg);
+}
+
+function renderQRSvg(code) {
+  return new Promise((resolve, reject) => {
+    QRCode.toString(code, {
+      type: "svg",
+      width: 512,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF"
+      }
+    }, (err, svgString) => {
+      if (err) reject(err);
+      else resolve(svgString);
+    });
+  });
+}
+
+async function buildVisuals(item) {
+  const key = String(item.code || "");
+  if (visualCache.has(key)) return visualCache.get(key);
+  if (visualPromises.has(key)) return visualPromises.get(key);
+
+  const promise = (async () => {
+    const result = {
+      qrSvg: "",
+      barcodeSvg: "",
+      barcodeFormat: detectBarcodeFormat(item.code)
+    };
+
+    try {
+      result.qrSvg = await renderQRSvg(item.code);
+    } catch {}
+
+    try {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      JsBarcode(svg, item.code, {
+        format: result.barcodeFormat,
+        lineColor: "#0f172a",
+        background: "#ffffff",
+        width: item.code.length >= 13 ? 1.55 : 1.95,
+        height: 94,
+        margin: 8,
+        displayValue: true,
+        fontSize: 14,
+        textMargin: 4,
+        textAlign: "center",
+        font: "Arial"
+      });
+      result.barcodeSvg = svg.outerHTML;
+    } catch {}
+
+    visualCache.set(key, result);
+    visualPromises.delete(key);
+    return result;
+  })();
+
+  visualPromises.set(key, promise);
+  return promise;
+}
+
+function schedulePreload(items) {
+  if (preloadTimer) clearTimeout(preloadTimer);
+
+  const unique = [];
+  const seen = new Set();
+  for (const item of items || []) {
+    const code = String(item && item.code ? item.code : "");
+    if (!code || seen.has(code) || visualCache.has(code)) continue;
+    seen.add(code);
+    unique.push(item);
+    if (unique.length >= 5) break;
+  }
+
+  if (!unique.length) return;
+
+  preloadTimer = setTimeout(async () => {
+    for (const item of unique) {
+      try {
+        await buildVisuals(item);
+      } catch {}
+    }
+  }, 120);
+}
+
+async function copyText(text) {
+  const value = String(text || "");
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      setStatus("Đã sao chép mã", true);
+      return;
+    }
+  } catch {}
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = value;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    setStatus("Đã sao chép mã", true);
+  } catch {
+    setStatus("Không thể sao chép mã", true);
+  }
+}
+
+async function renderProduct(item) {
+  if (!item) return;
+
   lastSelected = item;
 
   detailCard.innerHTML = `
     <h2 class="productName">${escapeHtml(item.name)}</h2>
-    <div class="productCode">Mã: ${escapeHtml(item.code)}</div>
+    <div class="detailActions">
+      <div class="productCode">
+        <span>Mã:</span>
+        <span class="codeText">${escapeHtml(item.code)}</span>
+      </div>
+      <button class="copyBtn" id="copyBtn" type="button">Sao chép mã</button>
+    </div>
   `;
 
-  qrEl.innerHTML = "";
-  const qrCanvas = document.createElement("canvas");
-  QRCode.toCanvas(qrCanvas, item.code, { width: 190, margin: 2 });
-  qrEl.appendChild(qrCanvas);
+  const copyBtn = document.getElementById("copyBtn");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", () => copyText(item.code));
+  }
 
-  barcodeEl.innerHTML = "";
-  JsBarcode(barcodeEl, item.code, {
-    format: "CODE128",
-    lineColor: "#0f172a",
-    background: "#ffffff",
-    width: 3.2,
-    height: 110,
-    margin: 18,
-    displayValue: true,
-    fontSize: 18,
-    textMargin: 8,
-    textAlign: "center",
-    font: "Arial"
-  });
+  qrEl.innerHTML = `<div class="visualLoading">Đang tạo QR...</div>`;
+  barcodeContainer.innerHTML = "";
 
-  barcodeEl.style.width = "100%";
-  barcodeEl.style.height = "auto";
-  barcodeEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const visuals = await buildVisuals(item);
+  if (!lastSelected || String(lastSelected.code || "") !== String(item.code || "")) return;
+
+  if (visuals.qrSvg) {
+    qrEl.innerHTML = visuals.qrSvg;
+    const svg = qrEl.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("width", "190");
+      svg.setAttribute("height", "190");
+      svg.style.width = "190px";
+      svg.style.height = "190px";
+      svg.style.display = "block";
+      svg.style.maxWidth = "100%";
+      svg.style.shapeRendering = "crispEdges";
+      svg.style.textRendering = "geometricPrecision";
+    }
+  } else {
+    qrEl.innerHTML = `<div class="visualLoading">Không tạo được QR</div>`;
+  }
+
+  if (visuals.barcodeSvg) {
+    barcodeContainer.innerHTML = visuals.barcodeSvg;
+    const svg = barcodeContainer.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "auto");
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.style.width = "100%";
+      svg.style.maxWidth = "100%";
+      svg.style.height = "auto";
+      svg.style.display = "block";
+      svg.style.shapeRendering = "crispEdges";
+      svg.style.textRendering = "geometricPrecision";
+    }
+  } else {
+    renderBarcode(item.code);
+  }
+
+  schedulePreload([item]);
 }
 
 function hideSuggestions() {
@@ -728,38 +1097,62 @@ function showSuggestions(results) {
       <div class="suggestionName">${escapeHtml(item.name)}</div>
       <div class="suggestionCode">${escapeHtml(item.code)}</div>
     `;
-    row.addEventListener("click", () => {
+    row.addEventListener("click", async () => {
       searchInput.value = "";
       hideSuggestions();
-      renderProduct(item);
-      statusText.textContent = "Đã chọn sản phẩm";
+      await renderProduct(item);
+      setStatus("Đã chọn sản phẩm");
       searchInput.blur();
     });
     suggestionList.appendChild(row);
   });
 
   suggestionBox.style.display = "block";
+  schedulePreload(results);
 }
 
-function fuzzyScore(text, query) {
-  const t = normalizeText(text);
-  const q = normalizeText(query);
-  if (!q) return 0;
-
-  let score = 0;
-  if (t === q) score += 120;
-  if (t.startsWith(q)) score += 80;
-  if (t.includes(q)) score += 50;
-
-  const parts = q.split(/\s+/).filter(Boolean);
-  let hit = 0;
-  for (const part of parts) {
-    if (t.includes(part)) hit += 1;
+function dedupeByCode(items) {
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    const code = String(item.code || "");
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    out.push(item);
   }
-  score += hit * 12;
+  return out;
+}
 
-  score -= Math.abs(t.length - q.length) * 0.15;
-  return score;
+function searchProducts(query) {
+  const qRaw = String(query || "").trim();
+  const q = normalizeText(qRaw);
+
+  if (!q) return [];
+
+  const exactCodeMatches = products.filter(item => normalizeText(item.code) === q);
+  const codeContainsMatches = products.filter(item => normalizeText(item.code).includes(q));
+  const fallbackMatches = products.filter(item =>
+    normalizeText(item.name).includes(q) ||
+    normalizeText(item.code).includes(q)
+  );
+
+  let fuseMatches = [];
+  if (fuse) {
+    try {
+      fuseMatches = fuse.search(qRaw, { limit: 15 }).map(r => r.item);
+    } catch {
+      fuseMatches = [];
+    }
+  }
+
+  const merged = dedupeByCode([
+    ...exactCodeMatches,
+    ...codeContainsMatches,
+    ...fuseMatches,
+    ...fallbackMatches
+  ]);
+
+  return merged.slice(0, 8);
 }
 
 function searchAndSuggest() {
@@ -769,22 +1162,13 @@ function searchAndSuggest() {
   if (!q) {
     hideSuggestions();
     if (!lastSelected) setEmptyState("Kết quả sẽ hiện ở đây sau khi bạn chọn một gợi ý.");
-    statusText.textContent = "Đang chờ tìm kiếm";
+    setStatus("Đang chờ tìm kiếm");
     return;
   }
 
-  const results = products
-    .map(item => ({
-      item,
-      score: Math.max(fuzzyScore(item.name, q), fuzzyScore(item.code, q))
-    }))
-    .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 8)
-    .map(x => x.item);
-
+  const results = searchProducts(qRaw);
   showSuggestions(results);
-  statusText.textContent = results.length ? "Có gợi ý phù hợp" : "Không tìm thấy gợi ý";
+  setStatus(results.length ? "Có gợi ý phù hợp" : "Không tìm thấy gợi ý");
 }
 
 function triggerSearch() {
@@ -792,9 +1176,29 @@ function triggerSearch() {
   searchTimer = setTimeout(searchAndSuggest, 120);
 }
 
+function buildFuseIndex(data) {
+  fuse = new Fuse(data || [], {
+    includeScore: true,
+    shouldSort: true,
+    threshold: 0.32,
+    ignoreLocation: true,
+    minMatchCharLength: 1,
+    keys: [
+      { name: "name", weight: 0.7 },
+      { name: "code", weight: 0.3 },
+      { name: "searchText", weight: 1 }
+    ]
+  });
+}
+
+function findProductByCode(code) {
+  const target = String(code || "");
+  return products.find(item => String(item.code || "") === target) || null;
+}
+
 function loadData(showMessage = true) {
   if (showMessage) {
-    statusText.textContent = "Đang tải dữ liệu...";
+    setStatus("Đang tải dữ liệu...");
     countBadge.textContent = "Đang tải...";
   }
 
@@ -804,27 +1208,61 @@ function loadData(showMessage = true) {
       return res.text();
     })
     .then(text => {
+      const version = simpleHash(text);
+      const savedVersion = loadSavedVersion();
+
+      if (version === savedVersion && products.length) {
+        countBadge.textContent = `${products.length} sản phẩm`;
+        setStatus("Dữ liệu không đổi");
+        schedulePreload(products.slice(0, 5));
+        return;
+      }
+
       const parsed = parseCsv(text);
       products = parsed;
       saveData(products);
+      saveVersion(version);
+      buildFuseIndex(products);
 
       countBadge.textContent = `${products.length} sản phẩm`;
-      statusText.textContent = "Đã cập nhật dữ liệu";
+      setStatus("Đã cập nhật dữ liệu");
 
-      if (!lastSelected && products.length) {
-        renderProduct(products[0]);
+      if (products.length) {
+        if (lastSelected) {
+          const refreshed = findProductByCode(lastSelected.code);
+          if (refreshed) {
+            renderProduct(refreshed);
+          } else {
+            renderProduct(products[0]);
+          }
+        } else {
+          renderProduct(products[0]);
+        }
+      } else {
+        setEmptyState("Không có sản phẩm nào trong dữ liệu.");
       }
+
+      schedulePreload(products.slice(0, 5));
     })
     .catch(() => {
       const cached = loadSavedData();
       if (cached.length) {
         products = cached;
+        buildFuseIndex(products);
         countBadge.textContent = `${products.length} sản phẩm`;
-        statusText.textContent = "Đang dùng dữ liệu đã lưu";
-        if (!lastSelected) renderProduct(products[0]);
+        setStatus("Đang dùng dữ liệu đã lưu");
+
+        if (!lastSelected) {
+          renderProduct(products[0]);
+        } else {
+          const preserved = findProductByCode(lastSelected.code);
+          if (preserved) renderProduct(preserved);
+        }
+
+        schedulePreload(products.slice(0, 5));
       } else {
         countBadge.textContent = "Không tải được";
-        statusText.textContent = "Không kết nối được Google Sheet";
+        setStatus("Không kết nối được Google Sheet");
         setEmptyState("Không tải được dữ liệu. Hãy kiểm tra link Google Sheet và mở bằng Safari để ổn định hơn.");
       }
     });
@@ -835,22 +1273,27 @@ fileInput.addEventListener("change", function () {
   if (!file) return;
 
   fileName.textContent = file.name;
-  statusText.textContent = "Đang đọc file CSV...";
+  setStatus("Đang đọc file CSV...");
 
   const reader = new FileReader();
   reader.onload = function (e) {
-    const parsed = parseCsv(e.target.result || "");
+    const raw = e.target.result || "";
+    const parsed = parseCsv(raw);
     products = parsed;
+    buildFuseIndex(products);
     saveData(products);
+    saveVersion(simpleHash(raw));
 
     countBadge.textContent = `${products.length} sản phẩm`;
-    statusText.textContent = "Đã nạp file CSV";
+    setStatus("Đã nạp file CSV");
 
     if (products.length) {
       renderProduct(products[0]);
     } else {
       setEmptyState("File CSV chưa có dữ liệu hợp lệ.");
     }
+
+    schedulePreload(products.slice(0, 5));
   };
   reader.readAsText(file, "UTF-8");
 });
@@ -862,6 +1305,14 @@ searchInput.addEventListener("change", triggerSearch);
 searchInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
     e.preventDefault();
+    const results = searchProducts(searchInput.value);
+    if (results.length === 1) {
+      hideSuggestions();
+      renderProduct(results[0]);
+      setStatus("Đã chọn sản phẩm");
+      searchInput.blur();
+      return;
+    }
     searchAndSuggest();
   }
   if (e.key === "Escape") {
@@ -875,7 +1326,7 @@ clearBtn.addEventListener("click", function () {
   searchInput.value = "";
   searchInput.focus();
   hideSuggestions();
-  statusText.textContent = "Đã xoá ô tìm";
+  setStatus("Đã xoá ô tìm");
 });
 
 document.addEventListener("click", function (e) {
@@ -883,21 +1334,41 @@ document.addEventListener("click", function (e) {
   if (!inside) hideSuggestions();
 });
 
+function tryFocusSearch() {
+  try {
+    searchInput.focus({ preventScroll: true });
+  } catch {
+    searchInput.focus();
+  }
+}
+
 products = loadSavedData();
+buildFuseIndex(products);
+
 if (products.length) {
   countBadge.textContent = `${products.length} sản phẩm`;
-  statusText.textContent = "Đã nạp dữ liệu đã lưu";
+  setStatus("Đã nạp dữ liệu đã lưu");
   renderProduct(products[0]);
+  schedulePreload(products.slice(0, 5));
 }
 
 loadData(true);
-setInterval(() => loadData(false), 15000);
+
+setInterval(() => {
+  if (document.visibilityState === "visible") {
+    loadData(false);
+  }
+}, REFRESH_INTERVAL_MS);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
+
+window.addEventListener("load", () => {
+  setTimeout(tryFocusSearch, 350);
+});
 
 /* Chặn zoom */
 document.addEventListener("gesturestart", function (e) {

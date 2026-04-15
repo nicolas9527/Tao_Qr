@@ -87,7 +87,7 @@
     }
 
     .tabsWrap{
-      padding: 18px 18px 18px;
+      padding: 18px;
       background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
       border-bottom: 1px solid var(--line);
     }
@@ -185,24 +185,25 @@
     }
 
     .searchBox{
-      position:relative;
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
+      display:grid;
+      grid-template-columns: 1fr 150px;
+      gap: 10px;
+      align-items: stretch;
       width:100%;
     }
 
     .searchWrap{
       position:relative;
-      flex:1;
       min-width:0;
+      width:100%;
     }
 
     .search{
       width:100%;
+      height: 56px;
       border:1px solid var(--line);
       background:#f8fbff;
-      padding:15px 46px 15px 16px;
+      padding: 0 46px 0 16px;
       border-radius:18px;
       font-size:16px;
       outline:none;
@@ -248,17 +249,16 @@
     .searchBtn{
       border:none;
       border-radius:18px;
-      padding: 0 20px;
       height: 56px;
-      min-width: 98px;
+      width:100%;
       background: linear-gradient(180deg, var(--primary), var(--primary-3));
       color:#fff;
       font-weight:800;
       font-size:15px;
       cursor:pointer;
       box-shadow: 0 12px 24px rgba(59,130,246,.20);
-      flex:0 0 auto;
       border: 1px solid rgba(255,255,255,.28);
+      align-self: stretch;
     }
 
     .suggestionBox{
@@ -512,7 +512,7 @@
 
     @media (max-width: 859px){
       .searchBox{
-        flex-direction: column;
+        grid-template-columns: 1fr;
       }
 
       .searchBtn{
@@ -701,7 +701,7 @@
 
         <div class="panelGrid">
           <div class="card">
-            <div class="searchBox">
+            <div class="searchBox" style="grid-template-columns: 1fr auto;">
               <div class="searchWrap">
                 <input id="liveInput" class="search" placeholder="Nhập nội dung..." autocomplete="off" />
                 <button class="clearBtn" id="liveClearBtn" type="button">×</button>
@@ -757,7 +757,6 @@ let products = [];
 let fuse = null;
 let searchTimer = null;
 let lastSelected = null;
-let statusResetTimer = null;
 let preloadTimer = null;
 let liveTimer = null;
 let toastTimer = null;
@@ -771,8 +770,6 @@ const searchBtn = document.getElementById("searchBtn");
 const suggestionBox = document.getElementById("suggestionBox");
 const suggestionList = document.getElementById("suggestionList");
 const detailCard = document.getElementById("detailCard");
-const countBadge = null;
-const statusText = null;
 const barcodeContainer = document.getElementById("barcode");
 const qrEl = document.getElementById("qrcode");
 const toastEl = document.getElementById("toast");

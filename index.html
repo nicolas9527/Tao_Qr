@@ -518,6 +518,10 @@
       .searchBtn{
         width: 100%;
       }
+
+      .generatorSearchBox{
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (prefers-color-scheme: dark){
@@ -701,12 +705,11 @@
 
         <div class="panelGrid">
           <div class="card">
-            <div class="searchBox" style="grid-template-columns: 1fr auto;">
+            <div class="searchBox generatorSearchBox">
               <div class="searchWrap">
                 <input id="liveInput" class="search" placeholder="Nhập nội dung..." autocomplete="off" />
                 <button class="clearBtn" id="liveClearBtn" type="button">×</button>
               </div>
-              <button class="searchBtn" id="liveCopyBtn" type="button">Copy nội dung</button>
             </div>
 
             <div class="detailActions" style="margin-top:14px;">
@@ -779,7 +782,6 @@ const liveClearBtn = document.getElementById("liveClearBtn");
 const liveStatus = document.getElementById("liveStatus");
 const liveQr = document.getElementById("liveQr");
 const liveBarcode = document.getElementById("liveBarcode");
-const liveCopyBtn = document.getElementById("liveCopyBtn");
 
 const tabSearchBtn = document.getElementById("tabSearchBtn");
 const tabGeneratorBtn = document.getElementById("tabGeneratorBtn");
@@ -1056,7 +1058,10 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: { dark: "#000000", light: "#FFFFFF" }
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF"
+      }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1587,15 +1592,6 @@ liveClearBtn.addEventListener("click", () => {
   liveStatus.textContent = "Chờ nhập nội dung";
   liveQr.innerHTML = "";
   liveBarcode.innerHTML = "";
-});
-
-liveCopyBtn.addEventListener("click", () => {
-  const text = liveInput.value.trim();
-  if (!text) {
-    showToast("Chưa có nội dung để copy");
-    return;
-  }
-  copyText(text);
 });
 
 products = loadSavedData();

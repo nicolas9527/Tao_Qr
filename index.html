@@ -426,7 +426,7 @@
       text-rendering: geometricPrecision;
     }
 
-    #qrcode, #liveQr{
+    #liveQr{
       display:grid;
       place-items:center;
       width:100%;
@@ -655,7 +655,7 @@
       <section class="tabPanel active" id="panelSearch" role="tabpanel" aria-labelledby="tabSearchBtn">
         <div class="panelHeader">
           <h2>Tra cứu sản phẩm</h2>
-          <p>Nhập tên hoặc mã để xem kết quả, barcode và QR ở ngay bên dưới.</p>
+          <p>Nhập tên hoặc mã để xem kết quả và barcode ở ngay bên dưới.</p>
         </div>
 
         <div class="panelGrid searchGrid">
@@ -686,13 +686,6 @@
               <div class="blockLabel">Barcode</div>
               <div class="box">
                 <div id="barcode"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="blockLabel">QR Code</div>
-              <div class="box">
-                <div id="qrcode"></div>
               </div>
             </div>
           </div>
@@ -792,7 +785,6 @@ const suggestionBox = document.getElementById("suggestionBox");
 const suggestionList = document.getElementById("suggestionList");
 const detailCard = document.getElementById("detailCard");
 const barcodeContainer = document.getElementById("barcode");
-const qrEl = document.getElementById("qrcode");
 const toastEl = document.getElementById("toast");
 
 const liveInput = document.getElementById("liveInput");
@@ -947,7 +939,6 @@ function updateClearButton(inputEl, buttonEl) {
 
 function setEmptyState(message) {
   detailCard.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
-  qrEl.innerHTML = "";
   barcodeContainer.innerHTML = "";
 }
 
@@ -1064,19 +1055,16 @@ function renderQRSvg(code) {
   });
 }
 
-async function buildVisuals(item) {
+async function buildBarcodeVisual(item) {
   const key = String(item.code || "");
   if (visualCache.has(key)) return visualCache.get(key);
   if (visualPromises.has(key)) return visualPromises.get(key);
 
   const promise = (async () => {
     const result = {
-      qrSvg: "",
       barcodeSvg: "",
       barcodeFormat: detectBarcodeFormat(item.code)
     };
-
-    try { result.qrSvg = await renderQRSvg(item.code); } catch {}
 
     try {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -1122,7 +1110,7 @@ function schedulePreload(items) {
 
   preloadTimer = setTimeout(async () => {
     for (const item of unique) {
-      try { await buildVisuals(item); } catch {}
+      try { await buildBarcodeVisual(item); } catch {}
     }
   }, 180);
 }
@@ -1175,31 +1163,13 @@ async function renderProduct(item) {
   const copyBtn = document.getElementById("copyBtn");
   if (copyBtn) copyBtn.addEventListener("click", () => copyText(item.code));
 
-  qrEl.innerHTML = `<div class="visualLoading">Đang tạo QR...</div>`;
   barcodeContainer.innerHTML = `<div class="visualLoading">Đang tạo barcode...</div>`;
 
   await rafPromise();
   if (token !== pendingVisualToken) return;
 
-  const visuals = await buildVisuals(item);
+  const visuals = await buildBarcodeVisual(item);
   if (token !== pendingVisualToken) return;
-
-  if (visuals.qrSvg) {
-    qrEl.innerHTML = visuals.qrSvg;
-    const svg = qrEl.querySelector("svg");
-    if (svg) {
-      svg.setAttribute("width", "190");
-      svg.setAttribute("height", "190");
-      svg.style.width = "190px";
-      svg.style.height = "190px";
-      svg.style.display = "block";
-      svg.style.maxWidth = "100%";
-      svg.style.shapeRendering = "crispEdges";
-      svg.style.textRendering = "geometricPrecision";
-    }
-  } else {
-    qrEl.innerHTML = `<div class="visualLoading">Không tạo được QR</div>`;
-  }
 
   if (visuals.barcodeSvg) {
     barcodeContainer.innerHTML = visuals.barcodeSvg;

@@ -119,6 +119,7 @@
       transform: translateX(0);
       transition: transform .26s cubic-bezier(.2,.9,.2,1);
       pointer-events: none;
+      will-change: transform;
     }
 
     .segBtn{
@@ -276,6 +277,7 @@
       overflow:hidden;
       background:#fff;
       box-shadow: 0 18px 38px rgba(37,99,235,.14);
+      will-change: transform, opacity;
     }
 
     .suggestionHead{
@@ -292,6 +294,7 @@
     .suggestionList{
       max-height: 280px;
       overflow:auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .suggestionItem{
@@ -521,10 +524,6 @@
       .searchBtn{
         width: 100%;
       }
-
-      .generatorSearchBox{
-        grid-template-columns: 1fr;
-      }
     }
 
     @media (prefers-color-scheme: dark){
@@ -708,7 +707,7 @@
 
         <div class="panelGrid">
           <div class="card">
-            <div class="searchBox generatorSearchBox">
+            <div class="searchBox">
               <div class="searchWrap">
                 <input id="liveInput" class="search" placeholder="Nhập nội dung..." autocomplete="off" />
                 <button class="clearBtn" id="liveClearBtn" type="button">×</button>
@@ -759,13 +758,29 @@ const CACHE_VERSION_KEY = "productsDataVersion";
 const REFRESH_INTERVAL_MS = 60000;
 const ACTIVE_TAB_KEY = "pfpActiveTab";
 
+const supportsIdle = typeof window.requestIdleCallback === "function";
+function runIdle(fn, timeout = 120) {
+  if (supportsIdle) {
+    return window.requestIdleCallback(fn, { timeout });
+  }
+  return window.setTimeout(() => fn({ timeRemaining: () => 0, didTimeout: true }), timeout);
+}
+
+function rafPromise() {
+  return new Promise(resolve => requestAnimationFrame(() => resolve()));
+}
+
 let products = [];
 let fuse = null;
-let searchTimer = null;
+let searchTimer = 0;
 let lastSelected = null;
-let preloadTimer = null;
-let liveTimer = null;
-let toastTimer = null;
+let preloadTimer = 0;
+let liveTimer = 0;
+let toastTimer = 0;
+let loadAbort = null;
+let loadInFlight = false;
+let fuseReady = false;
+let pendingVisualToken = 0;
 
 const visualCache = new Map();
 const visualPromises = new Map();
@@ -843,7 +858,6 @@ function parseCsvLine(line) {
 
 function parseCsv(text) {
   if (!text) return [];
-
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -874,7 +888,6 @@ function parseCsv(text) {
   }
 
   const parsed = [];
-
   for (let i = startIndex; i < lines.length; i++) {
     const row = parseCsvLine(lines[i]);
     if (!row.length) continue;
@@ -895,7 +908,6 @@ function parseCsv(text) {
       });
     }
   }
-
   return parsed;
 }
 
@@ -909,42 +921,28 @@ function loadSavedData() {
 }
 
 function saveData(data) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-  } catch {}
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
 }
 
 function loadSavedVersion() {
-  try {
-    return localStorage.getItem(CACHE_VERSION_KEY) || "";
-  } catch {
-    return "";
-  }
+  try { return localStorage.getItem(CACHE_VERSION_KEY) || ""; } catch { return ""; }
 }
 
 function saveVersion(version) {
-  try {
-    localStorage.setItem(CACHE_VERSION_KEY, version);
-  } catch {}
+  try { localStorage.setItem(CACHE_VERSION_KEY, version); } catch {}
 }
 
 function showToast(message) {
   toastEl.textContent = message;
   toastEl.classList.add("show");
-
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 1700);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
 }
 
 function updateClearButton(inputEl, buttonEl) {
   if (!inputEl || !buttonEl) return;
-  if (inputEl.value.trim()) {
-    buttonEl.classList.add("show");
-  } else {
-    buttonEl.classList.remove("show");
-  }
+  if (inputEl.value.trim()) buttonEl.classList.add("show");
+  else buttonEl.classList.remove("show");
 }
 
 function setEmptyState(message) {
@@ -992,7 +990,6 @@ function isValidITF14(code) {
 function detectBarcodeFormat(code) {
   const value = String(code || "").trim();
   if (!/^\d+$/.test(value)) return "CODE128";
-
   if (isValidEAN13(value)) return "EAN13";
   if (isValidEAN8(value)) return "EAN8";
   if (isValidUPC(value)) return "UPC";
@@ -1002,7 +999,6 @@ function detectBarcodeFormat(code) {
 
 function renderBarcode(code) {
   const format = detectBarcodeFormat(code);
-
   barcodeContainer.innerHTML = "";
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
@@ -1050,7 +1046,6 @@ function renderBarcode(code) {
   svg.style.display = "block";
   svg.style.shapeRendering = "crispEdges";
   svg.style.textRendering = "geometricPrecision";
-
   barcodeContainer.appendChild(svg);
 }
 
@@ -1061,10 +1056,7 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF"
-      }
+      color: { dark: "#000000", light: "#FFFFFF" }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1084,9 +1076,7 @@ async function buildVisuals(item) {
       barcodeFormat: detectBarcodeFormat(item.code)
     };
 
-    try {
-      result.qrSvg = await renderQRSvg(item.code);
-    } catch {}
+    try { result.qrSvg = await renderQRSvg(item.code); } catch {}
 
     try {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -1125,18 +1115,16 @@ function schedulePreload(items) {
     if (!code || seen.has(code) || visualCache.has(code)) continue;
     seen.add(code);
     unique.push(item);
-    if (unique.length >= 5) break;
+    if (unique.length >= 1) break;
   }
 
   if (!unique.length) return;
 
   preloadTimer = setTimeout(async () => {
     for (const item of unique) {
-      try {
-        await buildVisuals(item);
-      } catch {}
+      try { await buildVisuals(item); } catch {}
     }
-  }, 120);
+  }, 180);
 }
 
 async function copyText(text) {
@@ -1170,8 +1158,8 @@ async function copyText(text) {
 
 async function renderProduct(item) {
   if (!item) return;
-
   lastSelected = item;
+  const token = ++pendingVisualToken;
 
   detailCard.innerHTML = `
     <h2 class="productName">${escapeHtml(item.name)}</h2>
@@ -1185,15 +1173,16 @@ async function renderProduct(item) {
   `;
 
   const copyBtn = document.getElementById("copyBtn");
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => copyText(item.code));
-  }
+  if (copyBtn) copyBtn.addEventListener("click", () => copyText(item.code));
 
   qrEl.innerHTML = `<div class="visualLoading">Đang tạo QR...</div>`;
-  barcodeContainer.innerHTML = "";
+  barcodeContainer.innerHTML = `<div class="visualLoading">Đang tạo barcode...</div>`;
+
+  await rafPromise();
+  if (token !== pendingVisualToken) return;
 
   const visuals = await buildVisuals(item);
-  if (!lastSelected || String(lastSelected.code || "") !== String(item.code || "")) return;
+  if (token !== pendingVisualToken) return;
 
   if (visuals.qrSvg) {
     qrEl.innerHTML = visuals.qrSvg;
@@ -1252,7 +1241,9 @@ function showSuggestions(results) {
     return;
   }
 
-  results.forEach(item => {
+  const fragment = document.createDocumentFragment();
+
+  for (const item of results) {
     const row = document.createElement("div");
     row.className = "suggestionItem";
     row.innerHTML = `
@@ -1266,9 +1257,10 @@ function showSuggestions(results) {
       await renderProduct(item);
       searchInput.blur();
     });
-    suggestionList.appendChild(row);
-  });
+    fragment.appendChild(row);
+  }
 
+  suggestionList.appendChild(fragment);
   suggestionBox.style.display = "block";
   schedulePreload(results);
 }
@@ -1288,7 +1280,6 @@ function dedupeByCode(items) {
 function searchProducts(query) {
   const qRaw = String(query || "").trim();
   const q = normalizeText(qRaw);
-
   if (!q) return [];
 
   const exactCodeMatches = products.filter(item => normalizeText(item.code) === q);
@@ -1299,7 +1290,7 @@ function searchProducts(query) {
   );
 
   let fuseMatches = [];
-  if (fuse) {
+  if (fuseReady && fuse) {
     try {
       fuseMatches = fuse.search(qRaw, { limit: 15 }).map(r => r.item);
     } catch {
@@ -1335,22 +1326,32 @@ function searchAndSuggest() {
 
 function triggerSearch() {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(searchAndSuggest, 120);
+  searchTimer = setTimeout(searchAndSuggest, 110);
 }
 
 function buildFuseIndex(data) {
-  fuse = new Fuse(data || [], {
-    includeScore: true,
-    shouldSort: true,
-    threshold: 0.32,
-    ignoreLocation: true,
-    minMatchCharLength: 1,
-    keys: [
-      { name: "name", weight: 0.7 },
-      { name: "code", weight: 0.3 },
-      { name: "searchText", weight: 1 }
-    ]
-  });
+  fuseReady = false;
+  const src = Array.isArray(data) ? data.slice() : [];
+  runIdle(() => {
+    try {
+      fuse = new Fuse(src, {
+        includeScore: true,
+        shouldSort: true,
+        threshold: 0.32,
+        ignoreLocation: true,
+        minMatchCharLength: 1,
+        keys: [
+          { name: "name", weight: 0.7 },
+          { name: "code", weight: 0.3 },
+          { name: "searchText", weight: 1 }
+        ]
+      });
+      fuseReady = true;
+    } catch {
+      fuse = null;
+      fuseReady = false;
+    }
+  }, 200);
 }
 
 function findProductByCode(code) {
@@ -1358,59 +1359,65 @@ function findProductByCode(code) {
   return products.find(item => String(item.code || "") === target) || null;
 }
 
-function loadData() {
-  fetch(SHEET_URL + "&t=" + Date.now())
-    .then(res => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.text();
-    })
-    .then(text => {
-      const version = simpleHash(text);
-      const savedVersion = loadSavedVersion();
+async function loadData() {
+  if (loadInFlight) return;
+  loadInFlight = true;
 
-      if (version === savedVersion && products.length) {
-        schedulePreload(products.slice(0, 5));
-        return;
+  if (loadAbort) {
+    try { loadAbort.abort(); } catch {}
+  }
+  loadAbort = new AbortController();
+
+  try {
+    const res = await fetch(SHEET_URL + "&t=" + Date.now(), { signal: loadAbort.signal, cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const version = simpleHash(text);
+    const savedVersion = loadSavedVersion();
+
+    if (version === savedVersion && products.length) {
+      loadInFlight = false;
+      return;
+    }
+
+    const parsed = parseCsv(text);
+    products = parsed;
+    saveData(products);
+    saveVersion(version);
+    buildFuseIndex(products);
+
+    if (products.length) {
+      if (lastSelected) {
+        const refreshed = findProductByCode(lastSelected.code);
+        if (refreshed) {
+          renderProduct(refreshed);
+        } else {
+          renderProduct(products[0]);
+        }
+      } else {
+        renderProduct(products[0]);
       }
-
-      const parsed = parseCsv(text);
-      products = parsed;
-      saveData(products);
-      saveVersion(version);
+    } else {
+      setEmptyState("Không có sản phẩm nào trong dữ liệu.");
+    }
+  } catch {
+    const cached = loadSavedData();
+    if (cached.length) {
+      products = cached;
       buildFuseIndex(products);
 
-      if (products.length) {
-        if (lastSelected) {
-          const refreshed = findProductByCode(lastSelected.code);
-          if (refreshed) renderProduct(refreshed);
-          else renderProduct(products[0]);
-        } else {
-          renderProduct(products[0]);
-        }
+      if (!lastSelected) {
+        renderProduct(products[0]);
       } else {
-        setEmptyState("Không có sản phẩm nào trong dữ liệu.");
+        const preserved = findProductByCode(lastSelected.code);
+        if (preserved) renderProduct(preserved);
       }
-
-      schedulePreload(products.slice(0, 5));
-    })
-    .catch(() => {
-      const cached = loadSavedData();
-      if (cached.length) {
-        products = cached;
-        buildFuseIndex(products);
-
-        if (!lastSelected) {
-          renderProduct(products[0]);
-        } else {
-          const preserved = findProductByCode(lastSelected.code);
-          if (preserved) renderProduct(preserved);
-        }
-
-        schedulePreload(products.slice(0, 5));
-      } else {
-        setEmptyState("Không tải được dữ liệu. Hãy kiểm tra link Google Sheet và mở bằng Safari để ổn định hơn.");
-      }
-    });
+    } else {
+      setEmptyState("Không tải được dữ liệu. Hãy kiểm tra link Google Sheet và mở bằng Safari để ổn định hơn.");
+    }
+  } finally {
+    loadInFlight = false;
+  }
 }
 
 function updateSegmentedIndicator(isSearch) {
@@ -1439,62 +1446,13 @@ function setActiveTab(tabName) {
   if (isSearch) {
     setTimeout(() => {
       try { searchInput.focus({ preventScroll: true }); } catch { searchInput.focus(); }
-    }, 50);
+    }, 60);
   } else {
     setTimeout(() => {
       try { liveInput.focus({ preventScroll: true }); } catch { liveInput.focus(); }
-    }, 50);
+    }, 60);
   }
 }
-
-tabSearchBtn.addEventListener("click", () => setActiveTab("search"));
-tabGeneratorBtn.addEventListener("click", () => setActiveTab("generator"));
-
-searchInput.addEventListener("input", function () {
-  updateClearButton(searchInput, clearBtn);
-  triggerSearch();
-});
-
-searchInput.addEventListener("keyup", function () {
-  updateClearButton(searchInput, clearBtn);
-  triggerSearch();
-});
-
-searchInput.addEventListener("change", function () {
-  updateClearButton(searchInput, clearBtn);
-  triggerSearch();
-});
-
-searchInput.addEventListener("keydown", function (e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    const results = searchProducts(searchInput.value);
-    if (results.length === 1) {
-      hideSuggestions();
-      renderProduct(results[0]);
-      searchInput.blur();
-      return;
-    }
-    searchAndSuggest();
-  }
-  if (e.key === "Escape") {
-    hideSuggestions();
-  }
-});
-
-searchBtn.addEventListener("click", searchAndSuggest);
-
-clearBtn.addEventListener("click", function () {
-  searchInput.value = "";
-  updateClearButton(searchInput, clearBtn);
-  searchInput.focus();
-  hideSuggestions();
-});
-
-document.addEventListener("click", function (e) {
-  const inside = suggestionBox.contains(e.target) || searchInput.contains(e.target) || searchBtn.contains(e.target) || clearBtn.contains(e.target);
-  if (!inside) hideSuggestions();
-});
 
 function renderLiveQR(text) {
   liveQr.innerHTML = `<div class="visualLoading">Đang tạo QR...</div>`;
@@ -1580,8 +1538,57 @@ function updateLiveGenerator() {
       liveStatus.textContent = "Chỉ tạo QR, chưa đủ điều kiện barcode";
       liveBarcode.innerHTML = `<div class="visualLoading">Chưa hợp lệ để tạo barcode</div>`;
     }
-  }, 120);
+  }, 110);
 }
+
+tabSearchBtn.addEventListener("click", () => setActiveTab("search"));
+tabGeneratorBtn.addEventListener("click", () => setActiveTab("generator"));
+
+searchInput.addEventListener("input", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
+});
+
+searchInput.addEventListener("keyup", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
+});
+
+searchInput.addEventListener("change", function () {
+  updateClearButton(searchInput, clearBtn);
+  triggerSearch();
+});
+
+searchInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const results = searchProducts(searchInput.value);
+    if (results.length === 1) {
+      hideSuggestions();
+      renderProduct(results[0]);
+      searchInput.blur();
+      return;
+    }
+    searchAndSuggest();
+  }
+  if (e.key === "Escape") {
+    hideSuggestions();
+  }
+});
+
+searchBtn.addEventListener("click", searchAndSuggest);
+
+clearBtn.addEventListener("click", function () {
+  searchInput.value = "";
+  updateClearButton(searchInput, clearBtn);
+  searchInput.focus();
+  hideSuggestions();
+});
+
+document.addEventListener("click", function (e) {
+  const inside = suggestionBox.contains(e.target) || searchInput.contains(e.target) || searchBtn.contains(e.target) || clearBtn.contains(e.target);
+  if (!inside) hideSuggestions();
+}, { passive: true });
 
 liveInput.addEventListener("input", function () {
   updateClearButton(liveInput, liveClearBtn);
@@ -1601,8 +1608,9 @@ products = loadSavedData();
 buildFuseIndex(products);
 
 if (products.length) {
-  renderProduct(products[0]);
-  schedulePreload(products.slice(0, 5));
+  setTimeout(() => {
+    if (!lastSelected) renderProduct(products[0]);
+  }, 0);
 }
 
 updateClearButton(searchInput, clearBtn);
@@ -1611,10 +1619,16 @@ updateClearButton(liveInput, liveClearBtn);
 const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";
 setActiveTab(savedTab === "generator" ? "generator" : "search");
 
-loadData();
+setEmptyState("Đang tải dữ liệu...");
+
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    loadData();
+  }, 80);
+});
 
 setInterval(() => {
-  if (document.visibilityState === "visible") {
+  if (document.visibilityState === "visible" && !loadInFlight) {
     loadData();
   }
 }, REFRESH_INTERVAL_MS);
@@ -1622,20 +1636,20 @@ setInterval(() => {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
+  }, { once: true });
 }
 
 document.addEventListener("gesturestart", function (e) {
   e.preventDefault();
-});
+}, { passive: false });
 
 document.addEventListener("gesturechange", function (e) {
   e.preventDefault();
-});
+}, { passive: false });
 
 document.addEventListener("gestureend", function (e) {
   e.preventDefault();
-});
+}, { passive: false });
 
 let lastTouchEnd = 0;
 document.addEventListener("touchend", function (event) {
@@ -1644,7 +1658,7 @@ document.addEventListener("touchend", function (event) {
     event.preventDefault();
   }
   lastTouchEnd = now;
-}, false);
+}, { passive: false });
 
 document.addEventListener("touchmove", function (e) {
   if (e.touches && e.touches.length > 1) {

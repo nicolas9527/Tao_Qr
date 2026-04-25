@@ -25,6 +25,7 @@
       --primary:#3b82f6;
       --primary-3:#1d4ed8;
       --danger:#ef4444;
+      --success:#16a34a;
       --shadow: 0 18px 44px rgba(37, 99, 235, .10);
       --shadow-strong: 0 22px 50px rgba(37, 99, 235, .16);
       --radius: 26px;
@@ -98,7 +99,7 @@
     .segmented{
       position: relative;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       padding: 6px;
       border-radius: 22px;
       background: rgba(239,246,255,.95);
@@ -111,7 +112,7 @@
       position:absolute;
       top: 6px;
       left: 6px;
-      width: calc(50% - 6px);
+      width: calc((100% - 12px) / 3);
       height: calc(100% - 12px);
       border-radius: 16px;
       background: linear-gradient(180deg, var(--primary), var(--primary-3));
@@ -265,6 +266,12 @@
       align-self: stretch;
     }
 
+    .searchBtn:active,
+    .copyBtn:active,
+    .miniBtn:active{
+      transform: translateY(1px);
+    }
+
     .suggestionBox{
       position:absolute;
       left:0;
@@ -365,7 +372,8 @@
       word-break: break-all;
     }
 
-    .copyBtn{
+    .copyBtn,
+    .miniBtn{
       border:none;
       border-radius:999px;
       padding: 10px 14px;
@@ -378,8 +386,11 @@
       border: 1px solid rgba(255,255,255,.28);
     }
 
-    .copyBtn:active{
-      transform: translateY(1px);
+    .miniBtn.secondary{
+      background: linear-gradient(180deg, #f8fbff, #eef5ff);
+      color:#1d4ed8;
+      border:1px solid #d6e6ff;
+      box-shadow: 0 10px 18px rgba(37,99,235,.08);
     }
 
     .empty{
@@ -453,6 +464,103 @@
       gap:16px;
     }
 
+    .field{
+      position:relative;
+      margin-bottom:12px;
+    }
+
+    .input{
+      width:100%;
+      height:58px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:#f8fbff;
+      padding: 20px 16px 10px;
+      font-size:16px;
+      color:var(--text);
+      outline:none;
+      transition: .18s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
+    .input:focus{
+      background:#fff;
+      border-color: rgba(59,130,246,.45);
+      box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    .label{
+      position:absolute;
+      left:16px;
+      top:11px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      color:#64748b;
+      pointer-events:none;
+      opacity:.85;
+    }
+
+    .actionRow{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .actionRow .miniBtn{
+      flex:1;
+      height:56px;
+      font-size:16px;
+    }
+
+    .status{
+      margin-top:14px;
+      padding:14px 16px;
+      border-radius:18px;
+      background: linear-gradient(180deg, #f8fbff, #eef5ff);
+      border:1px solid #d6e6ff;
+      color:#1d4ed8;
+      font-weight:800;
+      line-height:1.45;
+      min-height:52px;
+      display:flex;
+      align-items:center;
+    }
+
+    .preview{
+      display:grid;
+      gap:10px;
+    }
+
+    .previewItem{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-radius:18px;
+      background:#fff;
+      border:1px solid var(--line);
+    }
+
+    .previewKey{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      flex:0 0 auto;
+    }
+
+    .previewValue{
+      color:#0f172a;
+      font-size:15px;
+      font-weight:800;
+      text-align:right;
+      word-break:break-word;
+    }
+
     .footer{
       padding:14px 18px 18px;
       border-top:1px solid var(--line);
@@ -514,6 +622,11 @@
       .generatorGrid{
         grid-template-columns: 1fr 1fr;
       }
+
+      .addGrid{
+        grid-template-columns: 1fr 0.85fr;
+        align-items:start;
+      }
     }
 
     @media (max-width: 859px){
@@ -523,6 +636,10 @@
 
       .searchBtn{
         width: 100%;
+      }
+
+      .actionRow{
+        flex-direction: column;
       }
     }
 
@@ -570,7 +687,8 @@
       .panelHeader h2,
       .productName,
       .suggestionName,
-      .generatorTitle{
+      .generatorTitle,
+      .previewValue{
         color:#f8fafc;
       }
 
@@ -580,7 +698,18 @@
         border-color:#20304b;
       }
 
-      .empty, .footer, .suggestionCode, .visualLoading, .panelHeader p, .blockLabel{
+      .input{
+        background:#0b1220;
+        color:#f8fafc;
+        border-color:#20304b;
+      }
+
+      .input:focus,
+      .search:focus{
+        background:#0b1220;
+      }
+
+      .empty, .footer, .suggestionCode, .visualLoading, .panelHeader p, .blockLabel, .hint{
         color:#94a3b8;
       }
 
@@ -620,7 +749,8 @@
       }
 
       .searchBtn,
-      .copyBtn{
+      .copyBtn,
+      .miniBtn{
         box-shadow: 0 12px 24px rgba(37,99,235,.24);
       }
 
@@ -631,6 +761,23 @@
 
       .toast{
         background: rgba(2, 6, 23, .96);
+      }
+
+      .previewItem{
+        background:#0b1220;
+        border-color:#20304b;
+      }
+
+      .status{
+        background: linear-gradient(180deg, rgba(59,130,246,.16), rgba(37,99,235,.10));
+        color:#bfdbfe;
+        border-color: rgba(59,130,246,.22);
+      }
+
+      .miniBtn.secondary{
+        background: linear-gradient(180deg, #0b1220, #111a2b);
+        border-color:#20304b;
+        color:#bfdbfe;
       }
     }
   </style>
@@ -648,6 +795,7 @@
         <div class="segmentedIndicator" id="tabIndicator"></div>
         <button class="segBtn active" id="tabSearchBtn" type="button" role="tab" aria-selected="true" aria-controls="panelSearch">Tra cứu</button>
         <button class="segBtn" id="tabGeneratorBtn" type="button" role="tab" aria-selected="false" aria-controls="panelGenerator">Tạo mã</button>
+        <button class="segBtn" id="tabAddBtn" type="button" role="tab" aria-selected="false" aria-controls="panelAdd">Thêm SP</button>
       </div>
     </div>
 
@@ -732,6 +880,51 @@
           </div>
         </div>
       </section>
+
+      <section class="tabPanel" id="panelAdd" role="tabpanel" aria-labelledby="tabAddBtn">
+        <div class="panelHeader">
+          <h2>Thêm sản phẩm</h2>
+          <p>Nhập nhanh tên và mã sản phẩm, rồi lưu thẳng vào Google Sheet bằng API bạn đã tạo.</p>
+        </div>
+
+        <div class="panelGrid addGrid">
+          <div class="card">
+            <div class="field">
+              <div class="label">Tên sản phẩm</div>
+              <input id="addName" class="input" type="text" placeholder="Ví dụ: BIA SÀI GÒN LAGER LON 330ML" autocomplete="off" />
+            </div>
+
+            <div class="field">
+              <div class="label">Mã sản phẩm</div>
+              <input id="addCode" class="input" type="text" placeholder="Ví dụ: 8935012413328" autocomplete="off" inputmode="numeric" />
+            </div>
+
+            <div class="actionRow">
+              <button class="miniBtn secondary" id="addClearBtn" type="button">Xóa</button>
+              <button class="miniBtn" id="addSaveBtn" type="button">Lưu sản phẩm</button>
+            </div>
+
+            <div class="status" id="addStatus">Sẵn sàng nhập dữ liệu</div>
+          </div>
+
+          <div class="card">
+            <h2 class="generatorTitle">Xem trước</h2>
+            <div class="preview">
+              <div class="previewItem">
+                <div class="previewKey">Tên</div>
+                <div class="previewValue" id="addPreviewName">—</div>
+              </div>
+              <div class="previewItem">
+                <div class="previewKey">Mã</div>
+                <div class="previewValue" id="addPreviewCode">—</div>
+              </div>
+              <div class="empty">
+                Mẹo: nhập tên trước, nhấn Enter để nhảy sang ô mã, rồi Enter lần nữa để lưu.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <div class="footer">
@@ -750,6 +943,7 @@ const CACHE_KEY = "productsData";
 const CACHE_VERSION_KEY = "productsDataVersion";
 const REFRESH_INTERVAL_MS = 60000;
 const ACTIVE_TAB_KEY = "pfpActiveTab";
+const ADD_API_URL = "https://script.google.com/macros/s/AKfycbzKPsBBA09ClYBsqgLBcntRgH-q6oyGbaL0LwtIrbTQxS2hRJ5wE5xDiAODEG2TyRZKAg/exec";
 
 const supportsIdle = typeof window.requestIdleCallback === "function";
 function runIdle(fn, timeout = 120) {
@@ -774,6 +968,7 @@ let loadAbort = null;
 let loadInFlight = false;
 let fuseReady = false;
 let pendingVisualToken = 0;
+let addSaving = false;
 
 const visualCache = new Map();
 const visualPromises = new Map();
@@ -793,11 +988,21 @@ const liveStatus = document.getElementById("liveStatus");
 const liveQr = document.getElementById("liveQr");
 const liveBarcode = document.getElementById("liveBarcode");
 
+const addName = document.getElementById("addName");
+const addCode = document.getElementById("addCode");
+const addClearBtn = document.getElementById("addClearBtn");
+const addSaveBtn = document.getElementById("addSaveBtn");
+const addStatus = document.getElementById("addStatus");
+const addPreviewName = document.getElementById("addPreviewName");
+const addPreviewCode = document.getElementById("addPreviewCode");
+
 const tabSearchBtn = document.getElementById("tabSearchBtn");
 const tabGeneratorBtn = document.getElementById("tabGeneratorBtn");
+const tabAddBtn = document.getElementById("tabAddBtn");
 const tabIndicator = document.getElementById("tabIndicator");
 const panelSearch = document.getElementById("panelSearch");
 const panelGenerator = document.getElementById("panelGenerator");
+const panelAdd = document.getElementById("panelAdd");
 
 function normalizeText(str) {
   return (str || "")
@@ -1047,7 +1252,10 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: { dark: "#000000", light: "#FFFFFF" }
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF"
+      }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1390,36 +1598,41 @@ async function loadData() {
   }
 }
 
-function updateSegmentedIndicator(isSearch) {
+function updateSegmentedIndicator(index) {
   if (!tabIndicator) return;
-  tabIndicator.style.transform = isSearch
-    ? "translateX(0)"
-    : "translateX(calc(100% + 6px))";
+  tabIndicator.style.transform = `translateX(calc(${index} * 100%))`;
 }
 
 function setActiveTab(tabName) {
-  const isSearch = tabName === "search";
+  const tabIndex = tabName === "generator" ? 1 : tabName === "add" ? 2 : 0;
 
-  tabSearchBtn.classList.toggle("active", isSearch);
-  tabGeneratorBtn.classList.toggle("active", !isSearch);
+  tabSearchBtn.classList.toggle("active", tabIndex === 0);
+  tabGeneratorBtn.classList.toggle("active", tabIndex === 1);
+  tabAddBtn.classList.toggle("active", tabIndex === 2);
 
-  tabSearchBtn.setAttribute("aria-selected", String(isSearch));
-  tabGeneratorBtn.setAttribute("aria-selected", String(!isSearch));
+  tabSearchBtn.setAttribute("aria-selected", String(tabIndex === 0));
+  tabGeneratorBtn.setAttribute("aria-selected", String(tabIndex === 1));
+  tabAddBtn.setAttribute("aria-selected", String(tabIndex === 2));
 
-  panelSearch.classList.toggle("active", isSearch);
-  panelGenerator.classList.toggle("active", !isSearch);
+  panelSearch.classList.toggle("active", tabIndex === 0);
+  panelGenerator.classList.toggle("active", tabIndex === 1);
+  panelAdd.classList.toggle("active", tabIndex === 2);
 
-  updateSegmentedIndicator(isSearch);
+  updateSegmentedIndicator(tabIndex);
   localStorage.setItem(ACTIVE_TAB_KEY, tabName);
   hideSuggestions();
 
-  if (isSearch) {
+  if (tabIndex === 0) {
     setTimeout(() => {
       try { searchInput.focus({ preventScroll: true }); } catch { searchInput.focus(); }
     }, 60);
-  } else {
+  } else if (tabIndex === 1) {
     setTimeout(() => {
       try { liveInput.focus({ preventScroll: true }); } catch { liveInput.focus(); }
+    }, 60);
+  } else {
+    setTimeout(() => {
+      try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
     }, 60);
   }
 }
@@ -1511,8 +1724,72 @@ function updateLiveGenerator() {
   }, 110);
 }
 
+async function addProduct() {
+  if (addSaving) return;
+
+  const name = addName.value.trim();
+  const code = addCode.value.trim();
+
+  if (!name || !code) {
+    addStatus.textContent = "Vui lòng nhập đủ tên và mã";
+    showToast("Nhập đủ thông tin");
+    return;
+  }
+
+  const duplicate = products.some(item => normalizeText(item.code) === normalizeText(code));
+  if (duplicate) {
+    addStatus.textContent = "Mã này đã tồn tại";
+    showToast("Mã đã tồn tại");
+    return;
+  }
+
+  addSaving = true;
+  addSaveBtn.disabled = true;
+  addClearBtn.disabled = true;
+  addStatus.textContent = "Đang lưu...";
+
+  try {
+    await fetch(ADD_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({ name, code })
+    });
+
+    showToast("Đã lưu sản phẩm ✅");
+    addStatus.textContent = "Đã lưu thành công ✅";
+
+    addName.value = "";
+    addCode.value = "";
+    updateAddPreview();
+    updateClearButton(addName, null);
+    updateClearButton(addCode, null);
+
+    setTimeout(() => {
+      loadData();
+    }, 450);
+
+    try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
+  } catch (err) {
+    console.error(err);
+    addStatus.textContent = "Không kết nối được API";
+    showToast("Lỗi kết nối");
+  } finally {
+    addSaving = false;
+    addSaveBtn.disabled = false;
+    addClearBtn.disabled = false;
+  }
+}
+
+function updateAddPreview() {
+  const name = addName.value.trim();
+  const code = addCode.value.trim();
+  addPreviewName.textContent = name || "—";
+  addPreviewCode.textContent = code || "—";
+}
+
 tabSearchBtn.addEventListener("click", () => setActiveTab("search"));
 tabGeneratorBtn.addEventListener("click", () => setActiveTab("generator"));
+tabAddBtn.addEventListener("click", () => setActiveTab("add"));
 
 searchInput.addEventListener("input", function () {
   updateClearButton(searchInput, clearBtn);
@@ -1574,6 +1851,33 @@ liveClearBtn.addEventListener("click", () => {
   liveBarcode.innerHTML = "";
 });
 
+addName.addEventListener("input", updateAddPreview);
+addCode.addEventListener("input", updateAddPreview);
+
+addClearBtn.addEventListener("click", () => {
+  addName.value = "";
+  addCode.value = "";
+  updateAddPreview();
+  addStatus.textContent = "Đã xóa nội dung";
+  try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
+});
+
+addSaveBtn.addEventListener("click", addProduct);
+
+addName.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addCode.focus();
+  }
+});
+
+addCode.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addProduct();
+  }
+});
+
 products = loadSavedData();
 buildFuseIndex(products);
 
@@ -1585,9 +1889,10 @@ if (products.length) {
 
 updateClearButton(searchInput, clearBtn);
 updateClearButton(liveInput, liveClearBtn);
+updateAddPreview();
 
 const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";
-setActiveTab(savedTab === "generator" ? "generator" : "search");
+setActiveTab(savedTab === "generator" ? "generator" : savedTab === "add" ? "add" : "search");
 
 setEmptyState("Đang tải dữ liệu...");
 

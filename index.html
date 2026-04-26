@@ -1253,7 +1253,10 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: { dark: "#000000", light: "#FFFFFF" }
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF"
+      }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1734,23 +1737,35 @@ function updateLiveGenerator() {
   }, 110);
 }
 
-function mergeLocalProductIntoCache(item) {
-  const merged = dedupeByCode([...products, item]);
-  products = merged;
-  saveData(products);
-  buildFuseIndex(products);
-}
-
 async function saveProductWithRetry(payload, retries = 2) {
-  const url = `${ADD_API_URL}?name=${encodeURIComponent(payload.name)}&code=${encodeURIComponent(payload.code)}&t=${Date.now()}`;
-
   try {
-    await fetchWithTimeout(url, {
-      method: "GET",
+    const res = await fetchWithTimeout(ADD_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
       cache: "no-store"
     }, 6000);
 
-    return { ok: true };
+    const text = await res.text();
+
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("API không trả JSON hợp lệ");
+    }
+
+    if (data.status === "success") {
+      return { ok: true, data };
+    }
+
+    if (data.status === "duplicate") {
+      return { ok: false, reason: "duplicate", message: data.message || "Mã đã tồn tại" };
+    }
+
+    return { ok: false, reason: "server", message: data.message || "Lỗi từ server" };
   } catch (err) {
     if (retries > 0) {
       return await saveProductWithRetry(payload, retries - 1);
@@ -1767,6 +1782,13 @@ async function syncAfterSave(code) {
     if (findProductByCode(code)) return true;
   }
   return false;
+}
+
+function mergeLocalProductIntoCache(item) {
+  const merged = dedupeByCode([...products, item]);
+  products = merged;
+  saveData(products);
+  buildFuseIndex(products);
 }
 
 async function addProduct() {

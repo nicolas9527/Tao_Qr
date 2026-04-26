@@ -957,6 +957,13 @@ function rafPromise() {
   return new Promise(resolve => requestAnimationFrame(() => resolve()));
 }
 
+function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 let products = [];
 let fuse = null;
 let searchTimer = 0;
@@ -1724,6 +1731,44 @@ function updateLiveGenerator() {
   }, 110);
 }
 
+async function saveProductWithRetry(payload, retries = 2) {
+  const url = `${ADD_API_URL}?name=${encodeURIComponent(payload.name)}&code=${encodeURIComponent(payload.code)}&t=${Date.now()}`;
+
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: "GET",
+      cache: "no-store"
+    }, 6000);
+
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch {}
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    if (data && data.status === "success") {
+      return { ok: true, data };
+    }
+
+    if (data && data.status === "duplicate") {
+      return { ok: false, reason: "duplicate", message: data.message || "Mã đã tồn tại" };
+    }
+
+    if (data && data.status === "error") {
+      return { ok: false, reason: "server", message: data.message || "Lỗi từ server" };
+    }
+
+    return { ok: true, data: data || { status: "success" } };
+  } catch (err) {
+    if (retries > 0) {
+      return await saveProductWithRetry(payload, retries - 1);
+    }
+    throw err;
+  }
+}
+
 async function addProduct() {
   if (addSaving) return;
 
@@ -1749,26 +1794,30 @@ async function addProduct() {
   addStatus.textContent = "Đang lưu...";
 
   try {
-    await fetch(ADD_API_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify({ name, code })
-    });
+    const result = await saveProductWithRetry({ name, code }, 2);
 
-    showToast("Đã lưu sản phẩm ✅");
-    addStatus.textContent = "Đã lưu thành công ✅";
+    if (result.ok) {
+      showToast("Đã lưu sản phẩm ✅");
+      addStatus.textContent = "Đã lưu thành công ✅";
 
-    addName.value = "";
-    addCode.value = "";
-    updateAddPreview();
-    updateClearButton(addName, null);
-    updateClearButton(addCode, null);
+      addName.value = "";
+      addCode.value = "";
+      updateAddPreview();
+      updateClearButton(addName, addClearBtn);
+      updateClearButton(addCode, addClearBtn);
 
-    setTimeout(() => {
-      loadData();
-    }, 450);
+      setTimeout(() => {
+        loadData();
+      }, 450);
 
-    try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
+      try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
+    } else if (result.reason === "duplicate") {
+      addStatus.textContent = result.message || "Mã này đã tồn tại";
+      showToast("Mã đã tồn tại");
+    } else {
+      addStatus.textContent = result.message || "Không lưu được";
+      showToast("Lỗi lưu");
+    }
   } catch (err) {
     console.error(err);
     addStatus.textContent = "Không kết nối được API";
@@ -1889,6 +1938,8 @@ if (products.length) {
 
 updateClearButton(searchInput, clearBtn);
 updateClearButton(liveInput, liveClearBtn);
+updateClearButton(addName, addClearBtn);
+updateClearButton(addCode, addClearBtn);
 updateAddPreview();
 
 const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";

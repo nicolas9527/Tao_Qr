@@ -1544,7 +1544,7 @@ function findProductByCode(code) {
   return products.find(item => String(item.code || "") === target) || null;
 }
 
-async function loadData() {
+async function loadData(force = false) {
   if (loadInFlight) return;
   loadInFlight = true;
 
@@ -1554,19 +1554,32 @@ async function loadData() {
   loadAbort = new AbortController();
 
   try {
-    const res = await fetch(SHEET_URL + "&t=" + Date.now(), { signal: loadAbort.signal, cache: "no-store" });
+    const localSnapshot = loadSavedData();
+
+    const res = await fetch(SHEET_URL + "&t=" + Date.now() + "_" + Math.random().toString(16).slice(2), {
+      signal: loadAbort.signal,
+      cache: "no-store"
+    });
+
     if (!res.ok) throw new Error("HTTP " + res.status);
     const text = await res.text();
     const version = simpleHash(text);
     const savedVersion = loadSavedVersion();
 
-    if (version === savedVersion && products.length) {
+    if (!force && version === savedVersion && products.length) {
       loadInFlight = false;
       return;
     }
 
     const parsed = parseCsv(text);
-    products = parsed;
+
+    // Merge remote CSV + local cache để không bị ghi đè mất dòng mới khi CSV còn trễ.
+    const merged = dedupeByCode([
+      ...parsed,
+      ...localSnapshot
+    ]);
+
+    products = merged;
     saveData(products);
     saveVersion(version);
     buildFuseIndex(products);
@@ -1731,6 +1744,20 @@ function updateLiveGenerator() {
   }, 110);
 }
 
+async function syncAfterSave() {
+  // Đợi một chút để tránh trường hợp Google Sheets/CSV chưa kịp phản ánh ngay.
+  setTimeout(() => loadData(true), 600);
+  setTimeout(() => loadData(true), 2200);
+  setTimeout(() => loadData(true), 4500);
+}
+
+function mergeLocalProductIntoCache(item) {
+  const merged = dedupeByCode([...products, item]);
+  products = merged;
+  saveData(products);
+  buildFuseIndex(products);
+}
+
 async function saveProductWithRetry(payload, retries = 2) {
   const url = `${ADD_API_URL}?name=${encodeURIComponent(payload.name)}&code=${encodeURIComponent(payload.code)}&t=${Date.now()}`;
 
@@ -1797,6 +1824,9 @@ async function addProduct() {
     const result = await saveProductWithRetry({ name, code }, 2);
 
     if (result.ok) {
+      // Lưu ngay vào cache local để không bị CSV trễ ghi đè mất.
+      mergeLocalProductIntoCache({ name, code, kName: normalizeText(name), kCode: normalizeText(code), searchText: normalizeText(name + " " + code) });
+
       showToast("Đã lưu sản phẩm ✅");
       addStatus.textContent = "Đã lưu thành công ✅";
 
@@ -1806,9 +1836,7 @@ async function addProduct() {
       updateClearButton(addName, addClearBtn);
       updateClearButton(addCode, addClearBtn);
 
-      setTimeout(() => {
-        loadData();
-      }, 450);
+      syncAfterSave();
 
       try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
     } else if (result.reason === "duplicate") {
@@ -1949,7 +1977,7 @@ setEmptyState("Đang tải dữ liệu...");
 
 requestAnimationFrame(() => {
   setTimeout(() => {
-    loadData();
+    loadData(true);
   }, 80);
 });
 

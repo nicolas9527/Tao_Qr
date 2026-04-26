@@ -23,7 +23,6 @@
       --muted:#64748b;
       --line:#dbe5f1;
       --primary:#3b82f6;
-      --primary-2:#2563eb;
       --primary-3:#1d4ed8;
       --danger:#ef4444;
       --success:#16a34a;
@@ -38,7 +37,6 @@
       margin: 0;
       min-height: 100%;
       touch-action: manipulation;
-      -webkit-text-size-adjust: 100%;
     }
 
     body{
@@ -139,16 +137,22 @@
       transition: color .22s ease;
     }
 
-    .segBtn.active{ color:#fff; }
+    .segBtn.active{
+      color:#fff;
+    }
 
-    .content{ display:block; }
+    .content{
+      display:block;
+    }
 
     .tabPanel{
       display:none;
       padding: 18px;
     }
 
-    .tabPanel.active{ display:block; }
+    .tabPanel.active{
+      display:block;
+    }
 
     .panelHeader{
       margin-bottom: 14px;
@@ -243,7 +247,9 @@
       opacity:1;
     }
 
-    .clearBtn:active{ transform:translateY(-50%) scale(.96); }
+    .clearBtn:active{
+      transform:translateY(-50%) scale(.96);
+    }
 
     .searchBtn{
       border:none;
@@ -878,7 +884,7 @@
       <section class="tabPanel" id="panelAdd" role="tabpanel" aria-labelledby="tabAddBtn">
         <div class="panelHeader">
           <h2>Thêm sản phẩm</h2>
-          <p>Nhập nhanh tên và mã sản phẩm, rồi lưu thẳng vào Google Sheet bằng API.</p>
+          <p>Nhập nhanh tên và mã sản phẩm, rồi lưu thẳng vào Google Sheet bằng API bạn đã tạo.</p>
         </div>
 
         <div class="panelGrid addGrid">
@@ -949,13 +955,6 @@ function runIdle(fn, timeout = 120) {
 
 function rafPromise() {
   return new Promise(resolve => requestAnimationFrame(() => resolve()));
-}
-
-function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
 }
 
 let products = [];
@@ -1538,7 +1537,7 @@ function findProductByCode(code) {
   return products.find(item => String(item.code || "") === target) || null;
 }
 
-async function loadData(force = false) {
+async function loadData() {
   if (loadInFlight) return;
   loadInFlight = true;
 
@@ -1548,31 +1547,19 @@ async function loadData(force = false) {
   loadAbort = new AbortController();
 
   try {
-    const localSnapshot = loadSavedData();
-
-    const res = await fetch(SHEET_URL + "&t=" + Date.now() + "_" + Math.random().toString(16).slice(2), {
-      signal: loadAbort.signal,
-      cache: "no-store"
-    });
-
+    const res = await fetch(SHEET_URL + "&t=" + Date.now(), { signal: loadAbort.signal, cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const text = await res.text();
     const version = simpleHash(text);
     const savedVersion = loadSavedVersion();
 
-    if (!force && version === savedVersion && products.length) {
+    if (version === savedVersion && products.length) {
       loadInFlight = false;
       return;
     }
 
     const parsed = parseCsv(text);
-
-    const merged = dedupeByCode([
-      ...parsed,
-      ...localSnapshot
-    ]);
-
-    products = merged;
+    products = parsed;
     saveData(products);
     saveVersion(version);
     buildFuseIndex(products);
@@ -1737,60 +1724,6 @@ function updateLiveGenerator() {
   }, 110);
 }
 
-async function saveProductWithRetry(payload, retries = 2) {
-  try {
-    const res = await fetchWithTimeout(ADD_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store"
-    }, 6000);
-
-    const text = await res.text();
-
-    let data = null;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("API không trả JSON hợp lệ");
-    }
-
-    if (data.status === "success") {
-      return { ok: true, data };
-    }
-
-    if (data.status === "duplicate") {
-      return { ok: false, reason: "duplicate", message: data.message || "Mã đã tồn tại" };
-    }
-
-    return { ok: false, reason: "server", message: data.message || "Lỗi từ server" };
-  } catch (err) {
-    if (retries > 0) {
-      return await saveProductWithRetry(payload, retries - 1);
-    }
-    throw err;
-  }
-}
-
-async function syncAfterSave(code) {
-  const delays = [700, 1800, 3500, 5200];
-  for (const delay of delays) {
-    await new Promise(r => setTimeout(r, delay));
-    await loadData(true);
-    if (findProductByCode(code)) return true;
-  }
-  return false;
-}
-
-function mergeLocalProductIntoCache(item) {
-  const merged = dedupeByCode([...products, item]);
-  products = merged;
-  saveData(products);
-  buildFuseIndex(products);
-}
-
 async function addProduct() {
   if (addSaving) return;
 
@@ -1816,33 +1749,24 @@ async function addProduct() {
   addStatus.textContent = "Đang lưu...";
 
   try {
-    await saveProductWithRetry({ name, code }, 2);
-
-    mergeLocalProductIntoCache({
-      name,
-      code,
-      kName: normalizeText(name),
-      kCode: normalizeText(code),
-      searchText: normalizeText(name + " " + code)
+    await fetch(ADD_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({ name, code })
     });
+
+    showToast("Đã lưu sản phẩm ✅");
+    addStatus.textContent = "Đã lưu thành công ✅";
 
     addName.value = "";
     addCode.value = "";
     updateAddPreview();
-    updateClearButton(addName, addClearBtn);
-    updateClearButton(addCode, addClearBtn);
+    updateClearButton(addName, null);
+    updateClearButton(addCode, null);
 
-    addStatus.textContent = "Đang đồng bộ...";
-    showToast("Đã gửi lưu");
-
-    const confirmed = await syncAfterSave(code);
-    if (confirmed) {
-      addStatus.textContent = "Đã lưu thành công ✅";
-      showToast("Đã lưu sản phẩm ✅");
-    } else {
-      addStatus.textContent = "Đã gửi, chờ đồng bộ Google Sheet";
-      showToast("Đã gửi, đang đồng bộ");
-    }
+    setTimeout(() => {
+      loadData();
+    }, 450);
 
     try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
   } catch (err) {
@@ -1894,7 +1818,9 @@ searchInput.addEventListener("keydown", function (e) {
     }
     searchAndSuggest();
   }
-  if (e.key === "Escape") hideSuggestions();
+  if (e.key === "Escape") {
+    hideSuggestions();
+  }
 });
 
 searchBtn.addEventListener("click", searchAndSuggest);
@@ -1963,8 +1889,6 @@ if (products.length) {
 
 updateClearButton(searchInput, clearBtn);
 updateClearButton(liveInput, liveClearBtn);
-updateClearButton(addName, addClearBtn);
-updateClearButton(addCode, addClearBtn);
 updateAddPreview();
 
 const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";
@@ -1974,7 +1898,7 @@ setEmptyState("Đang tải dữ liệu...");
 
 requestAnimationFrame(() => {
   setTimeout(() => {
-    loadData(true);
+    loadData();
   }, 80);
 });
 

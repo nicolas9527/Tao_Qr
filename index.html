@@ -23,6 +23,7 @@
       --muted:#64748b;
       --line:#dbe5f1;
       --primary:#3b82f6;
+      --primary-2:#2563eb;
       --primary-3:#1d4ed8;
       --danger:#ef4444;
       --success:#16a34a;
@@ -37,6 +38,7 @@
       margin: 0;
       min-height: 100%;
       touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
     }
 
     body{
@@ -137,22 +139,16 @@
       transition: color .22s ease;
     }
 
-    .segBtn.active{
-      color:#fff;
-    }
+    .segBtn.active{ color:#fff; }
 
-    .content{
-      display:block;
-    }
+    .content{ display:block; }
 
     .tabPanel{
       display:none;
       padding: 18px;
     }
 
-    .tabPanel.active{
-      display:block;
-    }
+    .tabPanel.active{ display:block; }
 
     .panelHeader{
       margin-bottom: 14px;
@@ -247,9 +243,7 @@
       opacity:1;
     }
 
-    .clearBtn:active{
-      transform:translateY(-50%) scale(.96);
-    }
+    .clearBtn:active{ transform:translateY(-50%) scale(.96); }
 
     .searchBtn{
       border:none;
@@ -884,7 +878,7 @@
       <section class="tabPanel" id="panelAdd" role="tabpanel" aria-labelledby="tabAddBtn">
         <div class="panelHeader">
           <h2>Thêm sản phẩm</h2>
-          <p>Nhập nhanh tên và mã sản phẩm, rồi lưu thẳng vào Google Sheet bằng API bạn đã tạo.</p>
+          <p>Nhập nhanh tên và mã sản phẩm, rồi lưu thẳng vào Google Sheet bằng API.</p>
         </div>
 
         <div class="panelGrid addGrid">
@@ -1259,10 +1253,7 @@ function renderQRSvg(code) {
       width: 512,
       margin: 1,
       errorCorrectionLevel: "M",
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF"
-      }
+      color: { dark: "#000000", light: "#FFFFFF" }
     }, (err, svgString) => {
       if (err) reject(err);
       else resolve(svgString);
@@ -1573,7 +1564,6 @@ async function loadData(force = false) {
 
     const parsed = parseCsv(text);
 
-    // Merge remote CSV + local cache để không bị ghi đè mất dòng mới khi CSV còn trễ.
     const merged = dedupeByCode([
       ...parsed,
       ...localSnapshot
@@ -1744,13 +1734,6 @@ function updateLiveGenerator() {
   }, 110);
 }
 
-async function syncAfterSave() {
-  // Đợi một chút để tránh trường hợp Google Sheets/CSV chưa kịp phản ánh ngay.
-  setTimeout(() => loadData(true), 600);
-  setTimeout(() => loadData(true), 2200);
-  setTimeout(() => loadData(true), 4500);
-}
-
 function mergeLocalProductIntoCache(item) {
   const merged = dedupeByCode([...products, item]);
   products = merged;
@@ -1762,38 +1745,28 @@ async function saveProductWithRetry(payload, retries = 2) {
   const url = `${ADD_API_URL}?name=${encodeURIComponent(payload.name)}&code=${encodeURIComponent(payload.code)}&t=${Date.now()}`;
 
   try {
-    const res = await fetchWithTimeout(url, {
+    await fetchWithTimeout(url, {
       method: "GET",
       cache: "no-store"
     }, 6000);
 
-    const text = await res.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch {}
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    if (data && data.status === "success") {
-      return { ok: true, data };
-    }
-
-    if (data && data.status === "duplicate") {
-      return { ok: false, reason: "duplicate", message: data.message || "Mã đã tồn tại" };
-    }
-
-    if (data && data.status === "error") {
-      return { ok: false, reason: "server", message: data.message || "Lỗi từ server" };
-    }
-
-    return { ok: true, data: data || { status: "success" } };
+    return { ok: true };
   } catch (err) {
     if (retries > 0) {
       return await saveProductWithRetry(payload, retries - 1);
     }
     throw err;
   }
+}
+
+async function syncAfterSave(code) {
+  const delays = [700, 1800, 3500, 5200];
+  for (const delay of delays) {
+    await new Promise(r => setTimeout(r, delay));
+    await loadData(true);
+    if (findProductByCode(code)) return true;
+  }
+  return false;
 }
 
 async function addProduct() {
@@ -1821,31 +1794,35 @@ async function addProduct() {
   addStatus.textContent = "Đang lưu...";
 
   try {
-    const result = await saveProductWithRetry({ name, code }, 2);
+    await saveProductWithRetry({ name, code }, 2);
 
-    if (result.ok) {
-      // Lưu ngay vào cache local để không bị CSV trễ ghi đè mất.
-      mergeLocalProductIntoCache({ name, code, kName: normalizeText(name), kCode: normalizeText(code), searchText: normalizeText(name + " " + code) });
+    mergeLocalProductIntoCache({
+      name,
+      code,
+      kName: normalizeText(name),
+      kCode: normalizeText(code),
+      searchText: normalizeText(name + " " + code)
+    });
 
-      showToast("Đã lưu sản phẩm ✅");
+    addName.value = "";
+    addCode.value = "";
+    updateAddPreview();
+    updateClearButton(addName, addClearBtn);
+    updateClearButton(addCode, addClearBtn);
+
+    addStatus.textContent = "Đang đồng bộ...";
+    showToast("Đã gửi lưu");
+
+    const confirmed = await syncAfterSave(code);
+    if (confirmed) {
       addStatus.textContent = "Đã lưu thành công ✅";
-
-      addName.value = "";
-      addCode.value = "";
-      updateAddPreview();
-      updateClearButton(addName, addClearBtn);
-      updateClearButton(addCode, addClearBtn);
-
-      syncAfterSave();
-
-      try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
-    } else if (result.reason === "duplicate") {
-      addStatus.textContent = result.message || "Mã này đã tồn tại";
-      showToast("Mã đã tồn tại");
+      showToast("Đã lưu sản phẩm ✅");
     } else {
-      addStatus.textContent = result.message || "Không lưu được";
-      showToast("Lỗi lưu");
+      addStatus.textContent = "Đã gửi, chờ đồng bộ Google Sheet";
+      showToast("Đã gửi, đang đồng bộ");
     }
+
+    try { addName.focus({ preventScroll: true }); } catch { addName.focus(); }
   } catch (err) {
     console.error(err);
     addStatus.textContent = "Không kết nối được API";
@@ -1895,9 +1872,7 @@ searchInput.addEventListener("keydown", function (e) {
     }
     searchAndSuggest();
   }
-  if (e.key === "Escape") {
-    hideSuggestions();
-  }
+  if (e.key === "Escape") hideSuggestions();
 });
 
 searchBtn.addEventListener("click", searchAndSuggest);

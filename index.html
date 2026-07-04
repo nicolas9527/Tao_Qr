@@ -137,22 +137,16 @@
       transition: color .22s ease;
     }
 
-    .segBtn.active{
-      color:#fff;
-    }
+    .segBtn.active{ color:#fff; }
 
-    .content{
-      display:block;
-    }
+    .content{ display:block; }
 
     .tabPanel{
       display:none;
       padding: 18px;
     }
 
-    .tabPanel.active{
-      display:block;
-    }
+    .tabPanel.active{ display:block; }
 
     .panelHeader{
       margin-bottom: 14px;
@@ -247,9 +241,7 @@
       opacity:1;
     }
 
-    .clearBtn:active{
-      transform:translateY(-50%) scale(.96);
-    }
+    .clearBtn:active{ transform:translateY(-50%) scale(.96); }
 
     .searchBtn{
       border:none;
@@ -268,9 +260,7 @@
 
     .searchBtn:active,
     .copyBtn:active,
-    .miniBtn:active{
-      transform: translateY(1px);
-    }
+    .miniBtn:active{ transform: translateY(1px); }
 
     .suggestionBox{
       position:absolute;
@@ -372,6 +362,58 @@
       word-break: break-all;
     }
 
+    .statusCard{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 42px 1fr;
+      align-items:center;
+      gap:12px;
+      padding:14px 16px;
+      border-radius:22px;
+      background: linear-gradient(180deg, #f8fbff, #eef5ff);
+      border:1px solid #d6e6ff;
+      box-shadow: 0 12px 24px rgba(37,99,235,.08);
+      color:#1d4ed8;
+      max-width:100%;
+    }
+
+    .statusIcon{
+      width:42px;
+      height:42px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-weight:900;
+      font-size:18px;
+      background: linear-gradient(180deg, var(--primary), var(--primary-3));
+      box-shadow: 0 10px 18px rgba(59,130,246,.18);
+      flex:0 0 auto;
+    }
+
+    .statusContent{
+      min-width:0;
+      display:grid;
+      gap:3px;
+    }
+
+    .statusLabel{
+      color:#64748b;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      line-height:1.1;
+    }
+
+    .statusMessage{
+      color:#1d4ed8;
+      font-size:15px;
+      font-weight:900;
+      line-height:1.35;
+      word-break:break-word;
+    }
+
     .copyBtn,
     .miniBtn{
       border:none;
@@ -384,6 +426,11 @@
       cursor:pointer;
       box-shadow: 0 10px 18px rgba(59,130,246,.18);
       border: 1px solid rgba(255,255,255,.28);
+    }
+
+    .miniBtn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
     }
 
     .miniBtn.secondary{
@@ -421,14 +468,16 @@
       place-items:center;
     }
 
-    #barcode{
+    #barcode,
+    #liveBarcode{
       width:100%;
       max-width:100%;
-      height:auto;
-      display:block;
+      display:grid;
+      place-items:center;
     }
 
-    #barcode svg{
+    #barcode svg,
+    #liveBarcode svg{
       width:100%;
       max-width:100%;
       height:auto;
@@ -462,6 +511,77 @@
     .generatorGrid{
       display:grid;
       gap:16px;
+    }
+
+    .historyCard{
+      display:grid;
+      gap:14px;
+    }
+
+    .historyHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .historyHeader .generatorTitle{
+      margin-bottom:4px;
+    }
+
+    .historyList{
+      display:grid;
+      gap:10px;
+    }
+
+    .historyItem{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:12px;
+      border-radius:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      cursor:pointer;
+      transition: background .14s ease, transform .14s ease;
+    }
+
+    .historyItem:hover{
+      background:#eff6ff;
+      transform: translateY(-1px);
+    }
+
+    .historyText{
+      min-width:0;
+    }
+
+    .historyValue{
+      font-size:15px;
+      font-weight:900;
+      color:#0f172a;
+      word-break:break-word;
+      line-height:1.35;
+    }
+
+    .historyMeta{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .historyActions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .historyActions .miniBtn{
+      padding:9px 12px;
+      font-size:12px;
     }
 
     .field{
@@ -643,6 +763,16 @@
       }
     }
 
+    @media (max-width: 560px){
+      .historyItem{
+        grid-template-columns: 1fr;
+      }
+
+      .historyActions{
+        justify-content:flex-start;
+      }
+    }
+
     @media (prefers-color-scheme: dark){
       :root{
         --bg1:#0a1224;
@@ -672,23 +802,18 @@
         background: rgba(10,16,30,.96);
       }
 
-      .hero{
-        color:#fff;
-      }
+      .hero{ color:#fff; }
 
-      .hero h1{
-        color:#dbeafe;
-      }
+      .hero h1{ color:#dbeafe; }
 
-      .hero p{
-        color:#cbd5e1;
-      }
+      .hero p{ color:#cbd5e1; }
 
       .panelHeader h2,
       .productName,
       .suggestionName,
       .generatorTitle,
-      .previewValue{
+      .previewValue,
+      .historyValue{
         color:#f8fafc;
       }
 
@@ -724,9 +849,7 @@
         border-color:#20304b;
       }
 
-      .segBtn{
-        color:#bfdbfe;
-      }
+      .segBtn{ color:#bfdbfe; }
 
       .suggestionBox{
         background:#0b1220;
@@ -763,15 +886,34 @@
         background: rgba(2, 6, 23, .96);
       }
 
-      .previewItem{
+      .previewItem,
+      .historyItem{
         background:#0b1220;
         border-color:#20304b;
+      }
+
+      .historyItem:hover{
+        background: rgba(59,130,246,.14);
       }
 
       .status{
         background: linear-gradient(180deg, rgba(59,130,246,.16), rgba(37,99,235,.10));
         color:#bfdbfe;
         border-color: rgba(59,130,246,.22);
+      }
+
+      .statusCard{
+        background: linear-gradient(180deg, rgba(59,130,246,.16), rgba(37,99,235,.10));
+        border-color: rgba(59,130,246,.22);
+        box-shadow: 0 12px 24px rgba(37,99,235,.16);
+      }
+
+      .statusLabel{
+        color:#94a3b8;
+      }
+
+      .statusMessage{
+        color:#bfdbfe;
       }
 
       .miniBtn.secondary{
@@ -843,7 +985,7 @@
       <section class="tabPanel" id="panelGenerator" role="tabpanel" aria-labelledby="tabGeneratorBtn">
         <div class="panelHeader">
           <h2>Tạo mã từ nội dung</h2>
-          <p>Nhập bất kỳ nội dung nào để tạo QR. Nếu nội dung là số hợp lệ, barcode cũng sẽ được tạo.</p>
+          <p>Nhập bất kỳ nội dung nào để tạo QR. Nếu nội dung là số, barcode cũng sẽ được tạo.</p>
         </div>
 
         <div class="panelGrid">
@@ -855,10 +997,11 @@
               </div>
             </div>
 
-            <div class="detailActions" style="margin-top:14px;">
-              <div class="productCode">
-                <span>Trạng thái:</span>
-                <span id="liveStatus" class="codeText">Chờ nhập nội dung</span>
+            <div class="statusCard" aria-live="polite" aria-atomic="true">
+              <div class="statusIcon">✓</div>
+              <div class="statusContent">
+                <div class="statusLabel">Trạng thái</div>
+                <div id="liveStatus" class="statusMessage">Chờ nhập nội dung</div>
               </div>
             </div>
           </div>
@@ -876,6 +1019,20 @@
               <div class="box">
                 <div id="liveBarcode"></div>
               </div>
+            </div>
+          </div>
+
+          <div class="card historyCard">
+            <div class="historyHeader">
+              <div>
+                <h2 class="generatorTitle">Lịch sử tạo mã</h2>
+                <div class="empty">Bấm vào một mục để tạo lại QR/barcode nhanh.</div>
+              </div>
+              <button class="miniBtn secondary" id="historyClearBtn" type="button">Xóa lịch sử</button>
+            </div>
+
+            <div class="historyList" id="historyList">
+              <div class="empty">Chưa có lịch sử.</div>
             </div>
           </div>
         </div>
@@ -943,6 +1100,8 @@ const CACHE_KEY = "productsData";
 const CACHE_VERSION_KEY = "productsDataVersion";
 const REFRESH_INTERVAL_MS = 60000;
 const ACTIVE_TAB_KEY = "pfpActiveTab";
+const GENERATOR_HISTORY_KEY = "pfpGeneratorHistory";
+const MAX_GENERATOR_HISTORY = 30;
 const ADD_API_URL = "https://script.google.com/macros/s/AKfycbzKPsBBA09ClYBsqgLBcntRgH-q6oyGbaL0LwtIrbTQxS2hRJ5wE5xDiAODEG2TyRZKAg/exec";
 
 const supportsIdle = typeof window.requestIdleCallback === "function";
@@ -969,6 +1128,7 @@ let loadInFlight = false;
 let fuseReady = false;
 let pendingVisualToken = 0;
 let addSaving = false;
+let lastHistorySavedText = "";
 
 const visualCache = new Map();
 const visualPromises = new Map();
@@ -987,6 +1147,8 @@ const liveClearBtn = document.getElementById("liveClearBtn");
 const liveStatus = document.getElementById("liveStatus");
 const liveQr = document.getElementById("liveQr");
 const liveBarcode = document.getElementById("liveBarcode");
+const historyList = document.getElementById("historyList");
+const historyClearBtn = document.getElementById("historyClearBtn");
 
 const addName = document.getElementById("addName");
 const addCode = document.getElementById("addCode");
@@ -1038,17 +1200,26 @@ function parseCsvLine(line) {
 
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"' && line[i - 1] !== "\\") {
-      inQuotes = !inQuotes;
+
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
       continue;
     }
+
     if (ch === "," && !inQuotes) {
       out.push(cur);
       cur = "";
       continue;
     }
+
     cur += ch;
   }
+
   out.push(cur);
   return out.map(v => v.trim());
 }
@@ -1077,8 +1248,8 @@ function parseCsv(text) {
   let startIndex = 0;
 
   if (hasHeader) {
-    nameIndex = normalizedFirst.findIndex(h => h === "name" || h === "ten_sp" || h === "product_name");
-    codeIndex = normalizedFirst.findIndex(h => h === "codecontent" || h === "ma_sp" || h === "code" || h === "barcode" || h === "sku");
+    nameIndex = normalizedFirst.findIndex(h => h === "name" || h === "ten_sp" || h === "product_name" || h === "ten san pham");
+    codeIndex = normalizedFirst.findIndex(h => h === "codecontent" || h === "ma_sp" || h === "code" || h === "barcode" || h === "sku" || h === "ma san pham");
     if (nameIndex < 0) nameIndex = 0;
     if (codeIndex < 0) codeIndex = 1;
     startIndex = 1;
@@ -1134,6 +1305,127 @@ function showToast(message) {
   toastEl.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+}
+
+function loadGeneratorHistory() {
+  try {
+    const raw = localStorage.getItem(GENERATOR_HISTORY_KEY);
+    const data = raw ? JSON.parse(raw) : [];
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveGeneratorHistory(history) {
+  try {
+    localStorage.setItem(GENERATOR_HISTORY_KEY, JSON.stringify(history));
+  } catch {}
+}
+
+function formatHistoryTime(ts) {
+  try {
+    const d = new Date(ts);
+    return d.toLocaleString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit"
+    });
+  } catch {
+    return "";
+  }
+}
+
+function addGeneratorHistory(value) {
+  const text = String(value || "").trim();
+  if (!text) return;
+
+  if (normalizeText(text) === normalizeText(lastHistorySavedText)) return;
+  lastHistorySavedText = text;
+
+  const history = loadGeneratorHistory();
+  const normalized = normalizeText(text);
+  const filtered = history.filter(item => normalizeText(item.value) !== normalized);
+
+  filtered.unshift({
+    value: text,
+    createdAt: Date.now()
+  });
+
+  const limited = filtered.slice(0, MAX_GENERATOR_HISTORY);
+  saveGeneratorHistory(limited);
+  renderGeneratorHistory();
+}
+
+function deleteGeneratorHistoryItem(value) {
+  const normalized = normalizeText(value);
+  const history = loadGeneratorHistory().filter(item => normalizeText(item.value) !== normalized);
+  saveGeneratorHistory(history);
+  renderGeneratorHistory();
+}
+
+function clearGeneratorHistory() {
+  saveGeneratorHistory([]);
+  lastHistorySavedText = "";
+  renderGeneratorHistory();
+  showToast("Đã xóa lịch sử");
+}
+
+function renderGeneratorHistory() {
+  if (!historyList) return;
+
+  const history = loadGeneratorHistory();
+
+  if (!history.length) {
+    historyList.innerHTML = `<div class="empty">Chưa có lịch sử.</div>`;
+    return;
+  }
+
+  historyList.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+
+  for (const item of history) {
+    const value = String(item.value || "");
+    const row = document.createElement("div");
+    row.className = "historyItem";
+
+    row.innerHTML = `
+      <div class="historyText">
+        <div class="historyValue">${escapeHtml(value)}</div>
+        <div class="historyMeta">${escapeHtml(formatHistoryTime(item.createdAt))}</div>
+      </div>
+      <div class="historyActions">
+        <button class="miniBtn secondary historyCopyBtn" type="button">Chép</button>
+        <button class="miniBtn secondary historyDeleteBtn" type="button">Xóa</button>
+      </div>
+    `;
+
+    row.addEventListener("click", () => {
+      liveInput.value = value;
+      updateClearButton(liveInput, liveClearBtn);
+      updateLiveGenerator();
+      try { liveInput.focus({ preventScroll: true }); } catch { liveInput.focus(); }
+    });
+
+    const copyBtn = row.querySelector(".historyCopyBtn");
+    const deleteBtn = row.querySelector(".historyDeleteBtn");
+
+    copyBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      copyText(value);
+    });
+
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteGeneratorHistoryItem(value);
+      showToast("Đã xóa mục này");
+    });
+
+    fragment.appendChild(row);
+  }
+
+  historyList.appendChild(fragment);
 }
 
 function updateClearButton(inputEl, buttonEl) {
@@ -1193,17 +1485,18 @@ function detectBarcodeFormat(code) {
   return "CODE128";
 }
 
-function renderBarcode(code) {
-  const format = detectBarcodeFormat(code);
-  barcodeContainer.innerHTML = "";
+function renderBarcodeInto(container, code) {
+  const value = String(code || "").trim();
+  const format = detectBarcodeFormat(value);
+  container.innerHTML = "";
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
   try {
-    JsBarcode(svg, code, {
+    JsBarcode(svg, value, {
       format,
       lineColor: "#0f172a",
       background: "#ffffff",
-      width: code.length >= 13 ? 1.55 : 1.95,
+      width: value.length >= 13 ? 1.55 : 1.95,
       height: 94,
       margin: 8,
       displayValue: true,
@@ -1214,7 +1507,7 @@ function renderBarcode(code) {
     });
   } catch {
     try {
-      JsBarcode(svg, code, {
+      JsBarcode(svg, value, {
         format: "CODE128",
         lineColor: "#0f172a",
         background: "#ffffff",
@@ -1228,7 +1521,7 @@ function renderBarcode(code) {
         font: "Arial"
       });
     } catch {
-      barcodeContainer.innerHTML = `<div class="visualLoading">Không tạo được barcode</div>`;
+      container.innerHTML = `<div class="visualLoading">Không tạo được barcode</div>`;
       return;
     }
   }
@@ -1242,30 +1535,16 @@ function renderBarcode(code) {
   svg.style.display = "block";
   svg.style.shapeRendering = "crispEdges";
   svg.style.textRendering = "geometricPrecision";
-  barcodeContainer.appendChild(svg);
+  container.appendChild(svg);
 }
 
-function renderQRSvg(code) {
-  return new Promise((resolve, reject) => {
-    QRCode.toString(code, {
-      type: "svg",
-      width: 512,
-      margin: 1,
-      errorCorrectionLevel: "M",
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF"
-      }
-    }, (err, svgString) => {
-      if (err) reject(err);
-      else resolve(svgString);
-    });
-  });
+function renderBarcode(code) {
+  renderBarcodeInto(barcodeContainer, code);
 }
 
-async function buildBarcodeVisual(item) {
+function buildBarcodeVisual(item) {
   const key = String(item.code || "");
-  if (visualCache.has(key)) return visualCache.get(key);
+  if (visualCache.has(key)) return Promise.resolve(visualCache.get(key));
   if (visualPromises.has(key)) return visualPromises.get(key);
 
   const promise = (async () => {
@@ -1674,6 +1953,7 @@ function updateLiveGenerator() {
     updateClearButton(liveInput, liveClearBtn);
 
     if (!text) {
+      lastHistorySavedText = "";
       liveStatus.textContent = "Chờ nhập nội dung";
       liveQr.innerHTML = "";
       liveBarcode.innerHTML = "";
@@ -1683,45 +1963,27 @@ function updateLiveGenerator() {
     liveStatus.textContent = "Đang tạo mã...";
     await renderLiveQR(text);
 
-    const format = detectBarcodeFormat(text);
-    if (format) {
-      liveStatus.textContent = `Barcode hợp lệ (${format})`;
-      liveBarcode.innerHTML = "";
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const isNumeric = /^\d+$/.test(text);
 
-      try {
-        JsBarcode(svg, text, {
-          format,
-          lineColor: "#0f172a",
-          background: "#ffffff",
-          width: text.length >= 13 ? 1.55 : 1.95,
-          height: 94,
-          margin: 8,
-          displayValue: true,
-          fontSize: 14,
-          textMargin: 4,
-          textAlign: "center",
-          font: "Arial"
-        });
-
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "auto");
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        svg.style.width = "100%";
-        svg.style.maxWidth = "100%";
-        svg.style.height = "auto";
-        svg.style.display = "block";
-        svg.style.shapeRendering = "crispEdges";
-        svg.style.textRendering = "geometricPrecision";
-        liveBarcode.appendChild(svg);
-      } catch {
-        liveBarcode.innerHTML = `<div class="visualLoading">Không tạo được barcode</div>`;
-      }
-    } else {
-      liveStatus.textContent = "Chỉ tạo QR, chưa đủ điều kiện barcode";
-      liveBarcode.innerHTML = `<div class="visualLoading">Chưa hợp lệ để tạo barcode</div>`;
+    if (!isNumeric) {
+      liveStatus.textContent = "Đã tạo QR. Barcode chỉ hỗ trợ nội dung dạng số.";
+      liveBarcode.innerHTML = `<div class="visualLoading">Nội dung không phải số nên không tạo barcode</div>`;
+      addGeneratorHistory(text);
+      return;
     }
-  }, 110);
+
+    const format = detectBarcodeFormat(text);
+    liveStatus.textContent = `Đã tạo QR và barcode (${format})`;
+
+    try {
+      renderBarcodeInto(liveBarcode, text);
+      addGeneratorHistory(text);
+    } catch {
+      liveStatus.textContent = "Đã tạo QR, nhưng không tạo được barcode";
+      liveBarcode.innerHTML = `<div class="visualLoading">Không tạo được barcode</div>`;
+      addGeneratorHistory(text);
+    }
+  }, 350);
 }
 
 async function addProduct() {
@@ -1761,8 +2023,6 @@ async function addProduct() {
     addName.value = "";
     addCode.value = "";
     updateAddPreview();
-    updateClearButton(addName, null);
-    updateClearButton(addCode, null);
 
     setTimeout(() => {
       loadData();
@@ -1846,10 +2106,15 @@ liveClearBtn.addEventListener("click", () => {
   liveInput.value = "";
   updateClearButton(liveInput, liveClearBtn);
   liveInput.focus();
+  lastHistorySavedText = "";
   liveStatus.textContent = "Chờ nhập nội dung";
   liveQr.innerHTML = "";
   liveBarcode.innerHTML = "";
 });
+
+if (historyClearBtn) {
+  historyClearBtn.addEventListener("click", clearGeneratorHistory);
+}
 
 addName.addEventListener("input", updateAddPreview);
 addCode.addEventListener("input", updateAddPreview);
@@ -1890,6 +2155,7 @@ if (products.length) {
 updateClearButton(searchInput, clearBtn);
 updateClearButton(liveInput, liveClearBtn);
 updateAddPreview();
+renderGeneratorHistory();
 
 const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || "search";
 setActiveTab(savedTab === "generator" ? "generator" : savedTab === "add" ? "add" : "search");

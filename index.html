@@ -1402,10 +1402,13 @@ function renderGeneratorHistory() {
     `;
 
     row.addEventListener("click", () => {
+      if (document.activeElement && typeof document.activeElement.blur === "function") {
+        document.activeElement.blur();
+      }
       liveInput.value = value;
       updateClearButton(liveInput, liveClearBtn);
       updateLiveGenerator();
-      try { liveInput.focus({ preventScroll: true }); } catch { liveInput.focus(); }
+      showToast("Đã tạo lại từ lịch sử");
     });
 
     const copyBtn = row.querySelector(".historyCopyBtn");
